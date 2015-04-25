@@ -16,15 +16,17 @@ NumFrames = length(Xbin);
 % some analysis using bwconncomp and regionprops
 
 for i = 1:NumNeurons
+    display(['calculating PF center for neuron ',int2str(i)])
     ThreshMap = TMap{i}.*(TMap{i} > Min_pT);
     BoolMap = ThreshMap > 0;
     b{i} = bwconncomp(BoolMap);
-    r{i} = regionprops(b{i},'all');
+    r{i} = regionprops(b{i},'area','centroid');
 end
 
 
 
 for i = 1:NumNeurons
+    display(['repackaging PF info for neuron ',int2str(i)])
     NumPF(i) = b{i}.NumObjects;
     PFpixels{i,1} = [];
     PFcentroid{i,1} = [];
@@ -42,13 +44,24 @@ end
 % it
 
 % convert Xbin and Ybin into a single number denoting where the mouse is
-loc_index = sub2ind(size(TMap{1}),Xbin,Ybin); 
+loc_index = sub2ind(size(TMap{1}),Xbin,Ybin);
 for i = 1:NumNeurons
+    display(['calculating PF visits for neuron ',int2str(i)])
     PFnumepochs(i,1) = 0;
     PFepochs{i,1} = [];
     for j = 1:NumPF(i)
         PixelBool = zeros(1,NumFrames);
+        minp = min(PFpixels{i,j});
+        maxp = max(PFpixels{i,j});
         for k = 1:NumFrames
+            if (loc_index(k) < minp)
+                PixelBool(k) = 0;
+                continue;
+            end
+            if (loc_index(k) > maxp)
+                PixelBool(k) = 0;
+                continue;
+            end
             PixelBool(k) = ismember(loc_index(k),PFpixels{i,j});
         end
         PFepochs{i,j} = NP_FindSupraThresholdEpochs(PixelBool,eps,0);
@@ -57,22 +70,25 @@ for i = 1:NumNeurons
 end
 
 for i = 1:NumNeurons
-    PFactive{i,1} = [];
-    PFnumhits(i,1) = 0;
-    PFpcthits(i,1) = 0;
-    PFactive{i,1} = [];
+    display(['calculating PF hits for neuron ',int2str(i)])
+
     for j = 1:NumPF(i)
+        PFactive{i,j} = [];
+        PFnumhits(i,j) = 0;
+        PFpcthits(i,j) = 0;
         for k = 1:PFnumepochs(i,j)
             PFactive{i,j}(k) = sum(FT(i,PFepochs{i,j}(k,1):PFepochs{i,j}(k,2))) > 0;
         end
-        PFnumhits(i,j) = sum(PFactive{i,j});
-        PFpcthits(i,j) = PFnumhits(i,j)/PFnumepochs(i,j);
+        if (~isempty(PFactive{i,j}))
+            PFnumhits(i,j) = sum(PFactive{i,j});
+            PFpcthits(i,j) = PFnumhits(i,j)/PFnumepochs(i,j);
+        end
     end
 end
 
 save PFstats.mat PFpcthits PFnumhits PFactive PFnumepochs PFepochs MaxPF PFcentroid PFsize PFpixels -v7.3;
 
 
-    
-    
+
+
 
