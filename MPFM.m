@@ -15,6 +15,7 @@ set(gcf,'Position',[534 72 1171 921]);
 
 aviobj = VideoWriter(out_avifile);
 aviobj.FrameRate = 20;
+aviobj.Quality = 10;
 open(aviobj);
 
 % assign each neuron a color
@@ -28,8 +29,7 @@ for i = 1:NumFrames
     Xa = get(gca,'XLim');
     Ya = get(gca,'YLim');
     
-    % plot mouse marker
-    plot(Xbin(i),Ybin(i),'ok','MarkerSize',30,'MarkerFaceColor','k');
+    
     
     % find active neurons
     an = find(FT(:,i));
@@ -59,7 +59,17 @@ for i = 1:NumFrames
             
         end
     end
+    
+    % plot mouse marker
+    if (isrunning(i))
+        mf = 'r';
+    else
+        mf = 'k';
+    end
+    
+    plot(Xbin(i),Ybin(i),'ok','MarkerSize',30,'MarkerFaceColor',mf);
     set(gca,'XLim',Xa,'YLim',Ya);
+    
     % getframe
     F = getframe(gcf);
     % write to avi
