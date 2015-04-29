@@ -22,19 +22,11 @@ else
     end
 end
 
-Xdim = size(NeuronImage{1},1);
-Ydim = size(NeuronImage{1},2);
-
-NumNeurons = length(caltrain);
-
 for i = 1:NumNeurons
     temp = bwboundaries(NeuronImage{i});
     yOutline{i} = temp{1}(:,1);
     xOutline{i} = temp{1}(:,2);
 end
-
-Xdim = size(NeuronImage{1},1);
-Ydim = size(NeuronImage{1},2);
 
 [x,y,speed,FT,FToffset,FToffsetRear] = AlignImagingToTracking(Pix2Cm,FT);
 
