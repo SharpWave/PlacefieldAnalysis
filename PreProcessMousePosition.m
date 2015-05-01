@@ -80,8 +80,10 @@ MorePoints = 'y';
 length(time)
 
 while (strcmp(MorePoints,'y'))
-  subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
-  subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
+  subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');
+  hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
+  subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');
+  hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
   MorePoints = input('Is there a flaw that needs to be corrected?  [y/n] -->','s');
 
   
@@ -102,35 +104,45 @@ while (strcmp(MorePoints,'y'))
         v = readFrame(obj);
         FrameSelOK = 1;
     end
-    figure(555);
-    subplot(4,3,11);imagesc(flipud(v));hold on; % plot Video
-    plot(xAVI(sFrame:eFrame),yAVI(sFrame:eFrame),'LineWidth',1.5);hold off; % plot the selected trajectory
+    
     framesToCorrect = sFrame:eFrame;
+    frame_use_index = 1:floor(length(framesToCorrect)/2);
+    frame_use_num = length(frame_use_index);
     
     edit_start_time = time(sFrame);
     edit_end_time = time(eFrame);
+    
+    % Set marker colors to be green for the first 1/3, yellow for the 2nd
+    % 1/3, and red for the final 1/3
+    marker = {'go' 'yo' 'ro'};
+    marker_face = {'g' 'y' 'r'};
+    marker_fr = ones(size(frame_use_index));
+    num_markers = size(marker,2);
+    for jj = 1:num_markers-1
+        marker_fr(floor(jj*frame_use_num/num_markers)+1:...
+            floor((jj+1)*frame_use_num/num_markers)) = ...
+            (jj+1)*ones(size(floor(jj*frame_use_num/num_markers)+1:...
+            floor((jj+1)*frame_use_num/num_markers)));
+    end
+   
+    
     disp(['You are currently editing from ' num2str(edit_start_time) ...
         ' sec to ' num2str(edit_end_time) ' sec.'])
-    for i = 1:floor(length(framesToCorrect)/2);
-        % plot x and y values for the selected frames
-        figure(555);
-        subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]);
-        subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]);
-        
-        % plot the velocity
-        subplot(4,3,7:9);
-        vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)*(time(2)-time(1));
-        plot(time(MouseOnMazeFrame:end-1),vel(MouseOnMazeFrame:end));hold off;axis tight;xlabel('time (sec)');ylabel('velocity (units/sec)');
-        
-        % plot the current sub-trajectory
-        subplot(4,3,11);
-        imagesc(flipud(v));hold on;
-        plot(xAVI(sFrame:eFrame),yAVI(sFrame:eFrame),'LineWidth',1.5);hold off;title('chosen segment');
-        
-        % plot the current total trajectory
-        subplot(4,3,10);
-        imagesc(flipud(v));hold on;
+    
+    figure(555)
+    % Plot updated coordinates and velocity
+    % plot the current sub-trajectory
+    subplot(4,3,11);
+    imagesc(flipud(v));hold on;
+    plot(xAVI(sFrame:eFrame),yAVI(sFrame:eFrame),'LineWidth',1.5);hold off;title('chosen segment');
+    
+    % plot the current total trajectory
+    subplot(4,3,10);
+    imagesc(flipud(v));hold on;
         plot(xAVI(MouseOnMazeFrame:end),yAVI(MouseOnMazeFrame:end),'LineWidth',1.5);hold off;title('overall trajectory (post mouse arrival)');
+        
+    
+    for i = frame_use_index
         
         % plot the current video frame
         figure(1702);pause(0.1);
@@ -140,7 +152,7 @@ while (strcmp(MorePoints,'y'))
         imagesc(flipud(v));title('click here');
         
         % plot the existing position marker on top
-        hold on;plot(xAVI(sFrame+i*2),yAVI(sFrame+i*2),'ro','MarkerSize',4);
+        hold on;plot(xAVI(sFrame+i*2),yAVI(sFrame+i*2),marker{marker_fr(i)},'MarkerSize',4);
         display(['Time is ' num2str(time(sFrame+i*2)) ' seconds. Click the mouse''s back']);
         [xm,ym] = ginput(1);
         
@@ -158,13 +170,31 @@ while (strcmp(MorePoints,'y'))
         
         
         % plot marker
-        plot(xm,ym,'or','MarkerSize',4,'MarkerFaceColor','r');hold off;
+        plot(xm,ym,marker{marker_fr(i)},'MarkerSize',4,'MarkerFaceColor',marker_face{marker_fr(i)});hold off;
 
         
     end
     disp(['You just edited from ' num2str(edit_start_time) ...
         ' sec to ' num2str(edit_end_time) ' sec.'])
     close(1702);
+    
+    
+    % plot updated velocity
+    subplot(4,3,7:9);
+    vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)*(time(2)-time(1));
+    plot(time(MouseOnMazeFrame:end-1),vel(MouseOnMazeFrame:end));
+    hold off;axis tight;xlabel('time (sec)');ylabel('velocity (units/sec)');
+    xlim_use = get(gca,'XLim');
+    
+    % plot updated x and y values
+    figure(555);
+    subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');
+    hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
+    hold off;axis tight;set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]);
+    subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');
+    hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
+    hold off;axis tight;set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]);
+    
     % NRK edit
     save Pos_temp.mat Xpix Ypix xAVI yAVI MoMtime MouseOnMazeFrame
   continue
@@ -188,6 +218,8 @@ end
 
 XpixPF = Xpix;
 YpixPF = Ypix;
+
+keyboard
 
 Xpix = NP_QuickFilt(Xpix,0.0000001,1,PosSR);
 Ypix = NP_QuickFilt(Ypix,0.0000001,1,PosSR);
