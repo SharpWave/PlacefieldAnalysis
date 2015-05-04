@@ -181,7 +181,7 @@ while (strcmp(MorePoints,'y'))
     
     % plot updated velocity
     subplot(4,3,7:9);
-    vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)*(time(2)-time(1));
+    vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)/(time(2)-time(1));
     plot(time(MouseOnMazeFrame:end-1),vel(MouseOnMazeFrame:end));
     hold off;axis tight;xlabel('time (sec)');ylabel('velocity (units/sec)');
     xlim_use = get(gca,'XLim');
