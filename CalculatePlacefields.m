@@ -22,6 +22,8 @@ else
     end
 end
 
+NumNeurons = length(NeuronImage);
+
 for i = 1:NumNeurons
     temp = bwboundaries(NeuronImage{i});
     yOutline{i} = temp{1}(:,1);

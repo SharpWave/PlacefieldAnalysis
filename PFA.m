@@ -1,5 +1,5 @@
 function [] = PFA(roomstr)
-%UNTITLED Summary of this function goes here
+% [] = PFA(roomstr)
 %   Detailed explanation goes here
 
 % Step 1: Calculate Placefields
