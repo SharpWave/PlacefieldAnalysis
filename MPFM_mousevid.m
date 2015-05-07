@@ -15,6 +15,18 @@ else
     end
 end
 
+aviSR = 30.0003;
+
+try
+    h1 = implay('Raw.AVI');
+    obj = VideoReader('Raw.AVI');
+catch
+    avi_filepath = ls('*.avi');
+    h1 = implay(avi_filepath);
+    disp(['Using ' avi_filepath ])
+    obj = VideoReader(avi_filepath);
+end
+
 load PlaceMaps.mat;
 load PFstats.mat;
 
@@ -52,15 +64,18 @@ for i = 1:NumFrames
     
     % load correct movie frame
     % calculate correct frame based on iteration and offsets
+    obj.currentTime = (i/20+(FToffset-16)/20);
+    v = readFrame(obj);
+    
     imagesc(flipud(v));axis equal;hold on;
     
     
     
     set(gcf,'Position',[534 72 1171 921]);
     % plot trajectory, hold on
-    plot(Xbin,Ybin,'-','Color',[0.2 0.2 0.2]);hold on;axis tight;
-    Xa = get(gca,'XLim');
-    Ya = get(gca,'YLim');
+%     plot(xAVI,yAVI,'-','Color',[0.2 0.2 0.2]);hold on;axis tight;
+     Xa = get(gca,'XLim');
+     Ya = get(gca,'YLim');
     
     
     
@@ -82,8 +97,8 @@ for i = 1:NumFrames
         b = bwboundaries(temp,4);
         if (~isempty(b))
             
-            yt = b{1}(:,2);
-            xt = b{1}(:,1);
+            yt = Yb2AVI(b{1}(:,2));
+            xt = Xb2AVI(b{1}(:,1));
             xt= xt+(rand(size(xt))-0.5)/2;
             yt= yt+(rand(size(yt))-0.5)/2;
             %colors(j,:)
@@ -100,7 +115,7 @@ for i = 1:NumFrames
         mf = 'k';
     end
     
-    plot(Xbin(i),Ybin(i),'ok','MarkerSize',30,'MarkerFaceColor',mf);
+    plot(Xb2AVI(Xbin(i)),Yb2AVI(Ybin(i)),'ok','MarkerSize',10,'MarkerFaceColor',mf);
     set(gca,'XLim',Xa,'YLim',Ya);
     
     % getframe
