@@ -2,14 +2,6 @@ function [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition(
 
 close all;
 
-try
-    load Pos.mat
-    return
-catch 
-
-    
-
-    
 % Script to take position data at given timestamps and output and interpolate 
 % to any given timestamps.
 
@@ -42,7 +34,6 @@ yAVI = Ypix*.6246;
 
 figure(777);plot(Xpix,Ypix);title('pre-corrected data');
 
-% NRK Edit startpos
 try
     h1 = implay('Raw.AVI');
     obj = VideoReader('Raw.AVI');
@@ -52,13 +43,23 @@ catch
     disp(['Using ' avi_filepath ])
     obj = VideoReader(avi_filepath);
 end
-% NRK edit end
 
-% NRK edit
-if exist('Pos_temp.mat','file')
-    use_temp = input('Pos_temp.mat detected.  Enter "y" to use or "n" to start from scratch: ','s');
+
+
+
+if exist('Pos_temp.mat','file') || exist('Pos.mat','file')
+    % Determine if either Pos_temp or Pos file already exists in the
+    % directory, and prompt user to load it up if they want to continue
+    % editing it.
+    if exist('Pos_temp.mat','file') && ~exist('Pos.mat','file')
+        use_temp = input('Pos_temp.mat detected.  Enter "y" to use or "n" to start from scratch: ','s');
+        load_file = 'Pos_temp.mat';
+    elseif exist('Pos.mat','file')
+        use_temp = input('Previous Pos.mat detected.  Enter "y" to use or "n" to start from scratch: ','s');
+        load_file = 'Pos.mat';
+    end
     if strcmpi(use_temp,'y')
-        load('Pos_temp.mat')
+        load(load_file,'Xpix', 'Ypix', 'xAVI', 'yAVI', 'MoMtime', 'MouseOnMazeFrame');
         MoMtime
     else
         MouseOnMazeFrame = input('on what frame number does Mr. Mouse arrive on the maze??? --->');
@@ -128,21 +129,20 @@ while (strcmp(MorePoints,'y'))
     
     disp(['You are currently editing from ' num2str(edit_start_time) ...
         ' sec to ' num2str(edit_end_time) ' sec.'])
-    
-    figure(555)
-    % Plot updated coordinates and velocity
-    % plot the current sub-trajectory
-    subplot(4,3,11);
-    imagesc(flipud(v));hold on;
-    plot(xAVI(sFrame:eFrame),yAVI(sFrame:eFrame),'LineWidth',1.5);hold off;title('chosen segment');
-    
-    % plot the current total trajectory
-    subplot(4,3,10);
-    imagesc(flipud(v));hold on;
-        plot(xAVI(MouseOnMazeFrame:end),yAVI(MouseOnMazeFrame:end),'LineWidth',1.5);hold off;title('overall trajectory (post mouse arrival)');
-        
-    
+     
     for i = frame_use_index
+        
+        figure(555)
+        % Plot updated coordinates and velocity
+        % plot the current sub-trajectory
+        subplot(4,3,11);
+        imagesc(flipud(v));hold on;
+        plot(xAVI(sFrame:eFrame),yAVI(sFrame:eFrame),'LineWidth',1.5);hold off;title('chosen segment');
+        
+        % plot the current total trajectory
+        subplot(4,3,10);
+        imagesc(flipud(v));hold on;
+        plot(xAVI(MouseOnMazeFrame:end),yAVI(MouseOnMazeFrame:end),'LineWidth',1.5);hold off;title('overall trajectory (post mouse arrival)');
         
         % plot the current video frame
         figure(1702);pause(0.1);
@@ -171,15 +171,14 @@ while (strcmp(MorePoints,'y'))
         
         % plot marker
         plot(xm,ym,marker{marker_fr(i)},'MarkerSize',4,'MarkerFaceColor',marker_face{marker_fr(i)});hold off;
-
-        
+   
     end
     disp(['You just edited from ' num2str(edit_start_time) ...
         ' sec to ' num2str(edit_end_time) ' sec.'])
     close(1702);
     
-    
     % plot updated velocity
+    figure(555);
     subplot(4,3,7:9);
     vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)/(time(2)-time(1));
     plot(time(MouseOnMazeFrame:end-1),vel(MouseOnMazeFrame:end));
@@ -187,13 +186,14 @@ while (strcmp(MorePoints,'y'))
     xlim_use = get(gca,'XLim');
     
     % plot updated x and y values
-    figure(555);
     subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');
     hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
     hold off;axis tight;set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]);
     subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');
     hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
     hold off;axis tight;set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]);
+    
+    drawnow % Make sure everything gets updated properly!
     
     % NRK edit
     save Pos_temp.mat Xpix Ypix xAVI yAVI MoMtime MouseOnMazeFrame
@@ -215,14 +215,10 @@ while (strcmp(MorePoints,'y'))
         
 end
 
-
-XpixPF = Xpix;
-YpixPF = Ypix;
-
 keyboard
 
-Xpix = NP_QuickFilt(Xpix,0.0000001,1,PosSR);
-Ypix = NP_QuickFilt(Ypix,0.0000001,1,PosSR);
+Xpix_filt = NP_QuickFilt(Xpix,0.0000001,1,PosSR);
+Ypix_filt = NP_QuickFilt(Ypix,0.0000001,1,PosSR);
 
 if size(pos_data,2) == 5
     motion = pos_data(:,5);
@@ -248,17 +244,14 @@ time_index = arrayfun(@(a) [max(find(a >= time)) min(find(a < time))],...
     time_interp,'UniformOutput',0);
 time_test_cell = arrayfun(@(a) a,time_interp,'UniformOutput',0);
 
-xpos_interp = cellfun(@(a,b) lin_interp(time(a), Xpix(a),...
+xpos_interp = cellfun(@(a,b) lin_interp(time(a), Xpix_filt(a),...
     b),time_index,time_test_cell);
 
-ypos_interp = cellfun(@(a,b) lin_interp(time(a), Ypix(a),...
+ypos_interp = cellfun(@(a,b) lin_interp(time(a), Ypix_filt(a),...
     b),time_index,time_test_cell);
 
-save Pos.mat xpos_interp ypos_interp time_interp start_time MoMtime
+% Save all filtered data as well as raw data in case you want to go back
+% and fix an error you discover later on
+save Pos.mat xpos_interp ypos_interp time_interp start_time MoMtime Xpix Ypix xAVI yAVI MouseOnMazeFrame
 
 end
-
-
-
-
-

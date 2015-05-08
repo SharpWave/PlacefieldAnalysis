@@ -3,7 +3,12 @@ function [x,y,speed,FT,FToffset,FToffsetRear] = AlignImagingToTracking(Pix2Cm,FT
 %   Detailed explanation goes here
 SR = 20;
 
-[x,y,start_time,MoMtime] = PreProcessMousePosition('Video.DVT');
+try
+    load Pos.mat
+catch
+    [x,y,start_time,MoMtime] = PreProcessMousePosition('Video.DVT');
+end
+
 x = x.*Pix2Cm;
 y = y.*Pix2Cm;
 dx = diff(x);
