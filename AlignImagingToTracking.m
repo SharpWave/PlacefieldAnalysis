@@ -5,6 +5,8 @@ SR = 20;
 
 try
     load Pos.mat
+    x = xpos_interp;
+    y = ypos_interp;
 catch
     [x,y,start_time,MoMtime] = PreProcessMousePosition('Video.DVT');
 end
