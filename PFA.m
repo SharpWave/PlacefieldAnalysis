@@ -13,8 +13,11 @@ PFstats();
 % Step 3: Extract Traces
 ExtractTracesProc('D1Movie.h5',rawfile)
 
+clear all;
+load PlaceMaps.mat;
+
 % Step 4: Browse placefields
-PFbrowse('D1Movie.h5');
+PFbrowse('D1Movie.h5',find(pval > 0.9));
 
 end
 

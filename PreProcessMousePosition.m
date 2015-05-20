@@ -215,7 +215,7 @@ while (strcmp(MorePoints,'y'))
         
 end
 
-keyboard
+
 
 Xpix_filt = NP_QuickFilt(Xpix,0.0000001,1,PosSR);
 Ypix_filt = NP_QuickFilt(Ypix,0.0000001,1,PosSR);
