@@ -1,8 +1,5 @@
-function [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_test(filepath,auto_thresh)
-% [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_test(filepath,auto_thresh)
-% Inputs are filepath and auto_thresh - auto_thresh will typically be
-% around 0.01 or 0.02 - anything above 1-auto_thresh in the ecdf of
-% velocities will be automatically targeted for correction.
+function [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_auto(filepath, auto_thresh)
+
 close all;
 
 % Script to take position data at given timestamps and output and interpolate 
@@ -10,6 +7,10 @@ close all;
 
 PosSR = 30; % native sampling rate in Hz of position data (used only in smoothing)
 aviSR = 30.0003; % the framerate that the .avi thinks it's at
+cluster_thresh = 40; % For auto thresholding - any time there are events above
+% the velocity threshold specified by auto_thresh that are less than this
+% number of frames apart they will be grouped together
+
 
 % Import position data from DVT file
 try
@@ -72,12 +73,28 @@ close(h1); % Close Video Player
 
 % Get initial velocity profile for auto-thresholding
 vel_init = sqrt(diff(Xpix).^2+diff(Ypix).^2)/(time(2)-time(1));
+vel_init = [vel_init(1); vel_init];
 [fv xv] = ecdf(vel_init);
 if exist('auto_thresh','var')
     auto_vel_thresh = min(xv(fv > (1-auto_thresh)));
 else
     auto_vel_thresh = max(vel_init)+1;
 end
+
+% start auto-correction of anything above threshold
+auto_frames = vel_init > auto_vel_thresh & time > MoMtime;
+
+% Determine if auto thresholding applies
+if sum(auto_frames) > 0
+    auto_thresh_flag = 1;
+    [ on, off ] = get_on_off( auto_frames );
+    [ epoch_start, epoch_end ] = cluster_epochs( on, off, cluster_thresh );
+    n_epochs = length(epoch_start);
+elseif sum(auto_frames) == 0
+    auto_thresh_flag = 0;
+end
+
+% keyboard
 
 figure(555);
 subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');axis tight;
@@ -87,69 +104,49 @@ v0 = readFrame(obj);
 MorePoints = 'y';
 length(time)
 
-auto_correct_on = 0;
+n = 1;
 while (strcmp(MorePoints,'y'))
   subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');
   hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
   subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');
   hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
-  if auto_correct_on == 0
-      MorePoints = input('Is there a flaw that needs to be corrected?  [y/n] -->','s');
-  elseif auto_correct_on == 1
-      MorePoints = 'y';
-  end
-  subplot(4,3,7:9);
-  vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)/(time(2)-time(1));
-  vel = [vel(1); vel]; % Make velocity the same length as the position and time variables
-  plot(time(MouseOnMazeFrame:end),vel(MouseOnMazeFrame:end));
-  hold off;axis tight;xlabel('time (sec)');ylabel('velocity (units/sec)');
-  xlim_use = get(gca,'XLim');
+  MorePoints = input('Is there a flaw that needs to be corrected?  [y/n] -->','s');
 
   
   if (strcmp(MorePoints,'n') ~= 1 && strcmp(MorePoints,'g') ~= 1)
-    FrameSelOK = 0;
-    while (FrameSelOK == 0)
-        keyboard
-        % start auto-correction of anything above threshold
-        auto_frames = vel > auto_vel_thresh & time > MoMtime;
-        if sum(auto_frames) > 1
-            auto_correct_on = 1;
-            temp = find(auto_frames); % Get indices of all frames with velocity above threshold
-            temp2 = find(diff(temp) > 1); % Find times where there is a gap in the velocity above threshold
-            
-            % Default mode
-            sFrame = temp(1)-1; % start frame is first frame above threshold - 1 frames
-            eFrame = temp(temp2(1))+1; % end frame is first frame after start that falls below thresh + 1
-            
-            % Code to prevent auto-thresholding from getting an a never-ending loop
-            if exist('sFrame_prev','var') && (sFrame == sFrame_prev || eFrame == eFrame_prev || sFrame <= eFrame_prev - 2) 
-                sFrame = temp(1) - 8; % start frame is first frame above threshold - 4 frames
-                eFrame = temp(temp2(1)) + 4; % end frame is first frame after start that falls below thresh + 4
-            end
-            
-            % Insert a longer pause if segments you are editing are far
-            % apart to prevent spurious clicking that can introduce errors
-            if exist('eFrame_prev','var') && (sFrame - eFrame_prev) > 10
-                pause(1)
-            end
-        else % manual input
-            auto_correct_on = 0; % Make sure you have turned off manual correction in case you accidentally introduce a high-velocity event
-            display('click on the good points around the flaw then hit enter');
-            [DVTsec,~] = ginput(2); % DVTsec is start and end time in DVT seconds
-            sFrame = findclosest(time,DVTsec(1)); % index of start frame
-            eFrame = findclosest(time,DVTsec(2)); % index of end frame
-        end
-        
-        aviSR*sFrame;
-
-        if (sFrame/aviSR > obj.Duration || eFrame/aviSR > obj.Duration)
-            
-            continue;
-        end
-        obj.currentTime = sFrame/aviSR; % sFrame is the correct frame #, but .avi reads are done according to time
-        v = readFrame(obj);
-        FrameSelOK = 1;
-    end
+      if auto_thresh_flag == 0
+          FrameSelOK = 0;
+          while (FrameSelOK == 0)
+              display('click on the good points around the flaw then hit enter');
+              [DVTsec,~] = ginput(2); % DVTsec is start and end time in DVT seconds
+              sFrame = findclosest(time,DVTsec(1)); % index of start frame
+              eFrame = findclosest(time,DVTsec(2)); % index of end frame
+              aviSR*sFrame;
+              
+              if (sFrame/aviSR > obj.Duration || eFrame/aviSR > obj.Duration)
+                  
+                  continue;
+              end
+%               obj.currentTime = sFrame/aviSR; % sFrame is the correct frame #, but .avi reads are done according to time
+%               v = readFrame(obj);
+              FrameSelOK = 1;
+              
+          end
+          
+      elseif auto_thresh_flag == 1 % Input times from auto_threholded vector
+          sFrame = epoch_start(n)- 6;
+          eFrame = epoch_end(n) + 6;
+          
+          % Turn on manual thresholding once you correct all epochs above
+          % the velocity threshold
+          if n == n_epochs
+              auto_thresh_flag = 0;
+          else
+              n = n + 1;
+          end
+      end
+    obj.currentTime = sFrame/aviSR; % sFrame is the correct frame #, but .avi reads are done according to time
+    v = readFrame(obj);
     
     framesToCorrect = sFrame:eFrame;
     frame_use_index = 1:floor(length(framesToCorrect)/2);
@@ -175,7 +172,6 @@ while (strcmp(MorePoints,'y'))
     disp(['You are currently editing from ' num2str(edit_start_time) ...
         ' sec to ' num2str(edit_end_time) ' sec.'])
      
-    
     for i = frame_use_index
         
         figure(555)
@@ -191,18 +187,15 @@ while (strcmp(MorePoints,'y'))
         plot(xAVI(MouseOnMazeFrame:end),yAVI(MouseOnMazeFrame:end),'LineWidth',1.5);hold off;title('overall trajectory (post mouse arrival)');
         
         % plot the current video frame
-        figure(1702); pause(0.02);
-        gcf;
         obj.currentTime = framesToCorrect(i*2)/aviSR;
         v = readFrame(obj);
+        figure(1702);pause(0.1);
+        gcf;
         imagesc(flipud(v));title('click here');
-        pause(0.02);
         
         % plot the existing position marker on top
         hold on;plot(xAVI(sFrame+i*2),yAVI(sFrame+i*2),marker{marker_fr(i)},'MarkerSize',4);
         display(['Time is ' num2str(time(sFrame+i*2)) ' seconds. Click the mouse''s back']);
-        figure(1702); pause(0.02);
-        gcf;
         [xm,ym] = ginput(1);
         
         % apply corrected position to current frame
@@ -224,19 +217,13 @@ while (strcmp(MorePoints,'y'))
     end
     disp(['You just edited from ' num2str(edit_start_time) ...
         ' sec to ' num2str(edit_end_time) ' sec.'])
-    sFrame_prev = sFrame;
-    eFrame_prev = eFrame;
-%     pause(1)
-    if auto_correct_on == 0
-        close(1702); % only close it if not auto-correcting
-    end
+    close(1702);
     
     % plot updated velocity
     figure(555);
     subplot(4,3,7:9);
     vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)/(time(2)-time(1));
-    vel = [vel(1); vel]; % Make it the same length as Xpix, Ypix, and time
-    plot(time(MouseOnMazeFrame:end),vel(MouseOnMazeFrame:end));
+    plot(time(MouseOnMazeFrame:end-1),vel(MouseOnMazeFrame:end));
     hold off;axis tight;xlabel('time (sec)');ylabel('velocity (units/sec)');
     xlim_use = get(gca,'XLim');
     
@@ -269,8 +256,6 @@ while (strcmp(MorePoints,'y'))
   end
         
 end
-
-keyboard
 
 Xpix_filt = NP_QuickFilt(Xpix,0.0000001,1,PosSR);
 Ypix_filt = NP_QuickFilt(Ypix,0.0000001,1,PosSR);
