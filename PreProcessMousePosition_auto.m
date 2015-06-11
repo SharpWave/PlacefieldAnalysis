@@ -110,7 +110,11 @@ while (strcmp(MorePoints,'y'))
   hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
   subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');
   hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
-  MorePoints = input('Is there a flaw that needs to be corrected?  [y/n] -->','s');
+  if auto_thresh_flag == 0
+      MorePoints = input('Is there a flaw that needs to be corrected?  [y/n] -->','s');
+  else
+      MorePoints = 'y'; pause(1)
+  end
 
   
   if (strcmp(MorePoints,'n') ~= 1 && strcmp(MorePoints,'g') ~= 1)
