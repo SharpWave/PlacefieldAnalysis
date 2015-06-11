@@ -1,4 +1,4 @@
-function [AllFields] = PFbrowse(h5file,CellsToBrowse)
+function [AllFields] = PFbrowse(h5file,CellsToBrowse,varargin)
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -129,7 +129,7 @@ for i = CellsToBrowse
     
     
     
-    
+    saveas(gcf,['Cell_',int2str(i),'_placefield.jpg']);
     pause;
 end
 
