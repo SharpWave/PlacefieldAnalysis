@@ -38,6 +38,11 @@ for i = 1:NumNeurons
         PFcentroid{i,j} = r{i}(j).Centroid;
     end
     [~,MaxPF(i)] = max(PFsize(i,:));
+    % NK Question - should we calculate something similar for
+    % firing/transient rate? e.g. if we have a cell with a very large field
+    % that the cell only fires in once, but another, smaller field that the
+    % cell fires reliably and on numerous passes, wouldn't it be good to
+    % know that also?
 end
 
 % for every place field, figure out how many times the mouse passed through
