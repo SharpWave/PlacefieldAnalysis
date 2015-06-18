@@ -14,7 +14,7 @@ function [AllFields] = PFbrowse(h5file,CellsToBrowse,varargin)
 %
 % 4: All of the placefields with this one highlighted
 
-close all
+
 
 load PFstats.mat; % PFpcthits PFnumhits PFactive PFnumepochs PFepochs MaxPF PFcentroid PFsize PFpixels
 load PlaceMaps.mat; % x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin;
@@ -36,7 +36,7 @@ for i = CellsToBrowse
     boolmap = (TMap{i} > 0);
     AllFields = AllFields + boolmap;
 end
-figure;imagesc(AllFields);
+%figure;imagesc(AllFields);
 
 
 figure;
@@ -129,7 +129,7 @@ for i = CellsToBrowse
     
     
     
-    saveas(gcf,['Cell_',int2str(i),'_placefield.jpg']);
-    pause;
+    %saveas(gcf,['Cell_',int2str(i),'_placefield.jpg']);
+    %pause;
 end
 
