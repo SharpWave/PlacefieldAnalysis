@@ -122,7 +122,7 @@ else
 end
 
 % start auto-correction of anything above threshold
-auto_frames = vel_init > auto_vel_thresh & time > MoMtime;
+auto_frames = (Xpix == 0 | Ypix == 0 | vel_init > auto_vel_thresh) & time > MoMtime;
 
 % Determine if auto thresholding applies
 if sum(auto_frames) > 0
@@ -178,8 +178,8 @@ while (strcmp(MorePoints,'y'))
           end
           
       elseif auto_thresh_flag == 1 % Input times from auto_threholded vector
-          sFrame = epoch_start(n)- 6;
-          eFrame = epoch_end(n) + 6;
+          sFrame = max([1 epoch_start(n)- 6]);
+          eFrame = min([length(time) epoch_end(n) + 6]);
           
           % Turn on manual thresholding once you correct all epochs above
           % the velocity threshold
@@ -235,13 +235,13 @@ while (strcmp(MorePoints,'y'))
         % plot the current video frame
         obj.currentTime = framesToCorrect(i*2)/aviSR;
         v = readFrame(obj);
-        figure(1702);pause(0.1);
+        figure(1702);pause(0.01);
         gcf;
         imagesc(flipud(v));title('click here');
         
         % plot the existing position marker on top
         hold on;plot(xAVI(sFrame+i*2),yAVI(sFrame+i*2),marker{marker_fr(i)},'MarkerSize',4);
-        display(['Time is ' num2str(time(sFrame+i*2)) ' seconds. Click the mouse''s back']);
+%         display(['Time is ' num2str(time(sFrame+i*2)) ' seconds. Click the mouse''s back']);
         [xm,ym] = ginput(1);
         
         % apply corrected position to current frame
