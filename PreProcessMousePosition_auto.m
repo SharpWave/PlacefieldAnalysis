@@ -1,6 +1,46 @@
-function [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_auto(filepath, auto_thresh)
+function [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_auto(filepath, auto_thresh,varargin)
+% [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_auto(filepath, auto_thresh,...)
+% Function to correct errors in mouse tracking.  Runs once through the
+% entire sessions automatically having you edit any events above a velocity
+% threshold (set by 'auto_thresh', suggest setting this to 0.01 or 0.02).
+%
+% INPUTS
+%   filepath: pathname to DVT file. Must reside in the same directory as
+%   the AVI file it matches, and there must be only ONE DVT and ONE AVI
+%   file in this directory
+% 
+%   auto_thresh: proportion of timestamps you wish to edit - 0.01 will have
+%   you edit all timestamps where the velocity of the mouse is in the top
+%   1% of the distribution of all velocities - suggest starting at 0.01 or
+%   0.02 for a typical session, but stepping down to 0.001 or smaller if
+%   you do a second pass.
+%
+%   'update_pos_realtime' (optional): Default is 0. Set to 1 if you want to watch the
+%   position getting updated with each click of the mouse, but I don't
+%   suggest it because it tends to cause weird crashes when MATLAB can't
+%   figure out which figure it should actually be plotting to.
+%
+%   OUTPUTS (all saved in Pos.mat, along with some others)
+%   xpos_interp, ypos_interp: smoothed, corrected position data
+%   interpolated to match the frame rate of the imaging data (hardcoded at
+%   20 fps)
+%
+%   start_time: start of DVT file
+%
+%   MoMtime: the time that the mouse starts running on the maze
 
 close all;
+
+%% Get varargin
+
+update_pos_realtime = 0; % Default setting
+for j = 1:length(varargin)
+   if strcmpi('update_pos_realtime', varargin{j})
+      update_pos_realtime = varargin{j+1};
+   end
+end
+
+%%
 
 % Script to take position data at given timestamps and output and interpolate 
 % to any given timestamps.
@@ -178,17 +218,19 @@ while (strcmp(MorePoints,'y'))
      
     for i = frame_use_index
         
-        figure(555)
-        % Plot updated coordinates and velocity
-        % plot the current sub-trajectory
-        subplot(4,3,11);
-        imagesc(flipud(v));hold on;
-        plot(xAVI(sFrame:eFrame),yAVI(sFrame:eFrame),'LineWidth',1.5);hold off;title('chosen segment');
-        
-        % plot the current total trajectory
-        subplot(4,3,10);
-        imagesc(flipud(v));hold on;
-        plot(xAVI(MouseOnMazeFrame:end),yAVI(MouseOnMazeFrame:end),'LineWidth',1.5);hold off;title('overall trajectory (post mouse arrival)');
+        if update_pos_realtime == 1
+            figure(555)
+            % Plot updated coordinates and velocity
+            % plot the current sub-trajectory
+            subplot(4,3,11);
+            imagesc(flipud(v));hold on;
+            plot(xAVI(sFrame:eFrame),yAVI(sFrame:eFrame),'LineWidth',1.5);hold off;title('chosen segment');
+            
+            % plot the current total trajectory
+            subplot(4,3,10);
+            imagesc(flipud(v));hold on;
+            plot(xAVI(MouseOnMazeFrame:end),yAVI(MouseOnMazeFrame:end),'LineWidth',1.5);hold off;title('overall trajectory (post mouse arrival)');
+        end
         
         % plot the current video frame
         obj.currentTime = framesToCorrect(i*2)/aviSR;
