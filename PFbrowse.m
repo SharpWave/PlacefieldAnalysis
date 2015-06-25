@@ -130,6 +130,6 @@ for i = CellsToBrowse
     
     
     %saveas(gcf,['Cell_',int2str(i),'_placefield.jpg']);
-    %pause;
+    pause;
 end
 
