@@ -16,7 +16,7 @@ ymin = 10; % where you want to set the minimum y-value
 
 %% 1: Load all sessions, and align to imaging data
 
-% Dumpt everything into one structure for future ease
+% Dump everything into one structure for future ease
 sesh(1) = base_struct;
 sesh(2:length(reg_struct) + 1) = reg_struct;
 
@@ -66,6 +66,7 @@ for j = 1:length(sesh)
         span_y_ratio = span_y(j)/span_y(1);
     end
     
+    % Linearly adjust all the coordinates to match
     sesh(j).x_adj = (sesh(j).rot_x - xbound{j}(1))*span_x_ratio + xmin;
     sesh(j).y_adj = (sesh(j).rot_y - ybound{j}(1))*span_y_ratio + ymin;
     
