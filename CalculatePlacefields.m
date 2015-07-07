@@ -31,9 +31,12 @@ for i = 1:NumNeurons
 end
 
 try % Pull aligned data
-    disp('Using position data that has been aligned to other like sessions')
     load Pos_align.mat
-catch
+    disp('Using position data that has been aligned to other like sessions.')
+    
+    x = x_adj_cm;
+    y = y_adj_cm;
+catch % If no alignment has been performed, do it now.
     disp('Using position data that has NOT been aligned to other like sessions.')
     disp('NOT good for comparisons across sessions...run batch_align_pos for this.')
     [x,y,speed,FT,FToffset,FToffsetRear] = AlignImagingToTracking(Pix2Cm,FT);

@@ -1,22 +1,45 @@
-function [ ] = batch_align_pos(base_struct, reg_struct)
+function [ ] = batch_align_pos(base_struct, reg_struct, varargin)
 % Aligns position data so that every session has the same bounds on the
 % occupancy map and we can easily do correlations and other comparisons
 % between firing across sessions.  Everything gets scaled to the
 % trajectory/occupancy from the base session.
 %
-% INPUTS: mirror MD from MakeMouseSessionList, but must include at least
-% .Animal, .Date, .Session, AND .Room fields
+% INPUTS: 
+%   base_struct & reg_struct:
+%        mirror MD from MakeMouseSessionList, but must include at least
+%       .Animal, .Date, .Session, AND .Room fields
+%
+% OPTIONAL INPUTS (specify as batch_align_pos(...,'manual_rot_overwrite,1,...)
+%   manual_rot_overwrite: default = 1, will use pre-existing rotation
+%       data in rotated.mat file in the working directory, 0 will prompt you to
+%       perform the rotation for each session
+%   ratio_use: ratio of the data to use for alignment - if 0.95, then
+%       data is scaled so that the middle 95% of it in each session aligns with
+%       the middle 95% in other sessions.  default = 0.95.
 %
 % NOTE: this will not work well for the 2 environment experiment since it
 % does not account for any fish-eye distortions of the maze...should be
 % good for most comparisons between the same mazes, however
 
-%% Parameters
+
+%% Parameters/default values
+manual_rot_overwrite = 1;
 ratio_use = 0.95; % ratio of the data to use for alignment - if 0.95, then
 % data is scaled so that the middle 95% of it in each session aligns with
 % the middle 95% in other sessions
 xmin = 10; % where you want to set the minimum x value
 ymin = 10; % where you want to set the minimum y-value
+
+%% 0: Get varargins
+
+for j = 1:length(varargin)
+   if strcmpi(varargin{j},'manual_rot_overwrite')
+       manual_rot_overwrite = varargin{j+1};
+   end
+   if strcmpi(varargin{j},'ratio_use')
+       ratio_use = varargin{j+1};
+   end
+end
 
 %% 1: Load all sessions, and align to imaging data
 
@@ -44,14 +67,14 @@ for j = 1: length(sesh)
     sesh(j).FToffset = FToffset;
     sesh(j).FToffsetRear = FToffsetRear;
     % Fix day-to-day mis-alignments in rotation of the maze
-    [~,rot_x,rot_y, rot_ang] = sections(x,y,0);
+    [~,rot_x,rot_y, rot_ang] = sections(x,y,0,'manual_rot_overwrite',manual_rot_overwrite);
     sesh(j).rot_x = rot_x;
     sesh(j).rot_y = rot_y;
     sesh(j).rot_ang = rot_ang;
     
 end
 
-keyboard
+% keyboard
 
 %% 2: Align position data for each session to the base session by using the 95% occupancy limits, save as Pos_align.mat
 % Include base session in Pos_align for future reference
@@ -78,8 +101,8 @@ for j = 1:length(sesh)
     end
     
     % Linearly adjust all the coordinates to match
-    sesh(j).x_adj = (sesh(j).rot_x - xbound{j}(1))*span_x_ratio + xmin;
-    sesh(j).y_adj = (sesh(j).rot_y - ybound{j}(1))*span_y_ratio + ymin;
+    sesh(j).x_adj = (sesh(j).rot_x - xbound{j}(1))/span_x_ratio + xmin;
+    sesh(j).y_adj = (sesh(j).rot_y - ybound{j}(1))/span_y_ratio + ymin;
     
 end
 %% 4: Concatenate ALL position data into one X and one Y vector, and get Xedges and Yedges based on this
@@ -108,13 +131,31 @@ sessions_included(2:length(reg_struct) + 1) = reg_struct;
 for j = 1:length(sesh)
     x_adj_cm = sesh(j).x_adj;
     y_adj_cm = sesh(j).y_adj;
+    speed = sesh(j).speed;
     FT = sesh(j).FT;
-    FTalign = sesh(j).FTalign;
     FToffset = sesh(j).FToffset;
     FToffsetRear = sesh(j).FToffsetRear;
     save(fullfile(sesh(j).Location,'\Pos_align.mat'),'x_adj_cm','y_adj_cm',...
         'xmin','xmax','ymin','ymax', 'speed', 'FT', 'FToffset', ...
         'FToffsetRear', 'base_struct','sessions_included');
+end
+
+%% 7: Plot everything as a check
+figure(100);
+for j = 1:length(sesh)
+    % Plot on an individual subplot
+    subplot_auto(length(sesh) + 1,j+1);
+    plot(sesh(j).x_adj,sesh(j).y_adj);
+    xlim([xmin xmax]); ylim([ymin ymax])
+    title(['Session ' num2str(j)])
+    % Plot everything on top of the other
+    subplot_auto(length(sesh) + 1, 1);
+    hold on
+    plot(sesh(j).x_adj, sesh(j).y_adj);
+    xlim([xmin xmax]); ylim([ymin ymax])
+    hold off
+    title('All Sessions')
+end
 
 end
 
