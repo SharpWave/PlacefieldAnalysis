@@ -30,7 +30,16 @@ for i = 1:NumNeurons
     xOutline{i} = temp{1}(:,2);
 end
 
-[x,y,speed,FT,FToffset,FToffsetRear] = AlignImagingToTracking(Pix2Cm,FT);
+try % Pull aligned data
+    disp('Using position data that has been aligned to other like sessions')
+    load Pos_align.mat
+catch
+    disp('Using position data that has NOT been aligned to other like sessions.')
+    disp('NOT good for comparisons across sessions...run batch_align_pos for this.')
+    [x,y,speed,FT,FToffset,FToffsetRear] = AlignImagingToTracking(Pix2Cm,FT);
+    xmax = max(x); xmin = min(x);
+    ymax = max(y); ymin = min(y);
+end
 
 Flength = length(x);
 
@@ -44,14 +53,14 @@ figure(1);plot(t,speed);axis tight;xlabel('time (sec)');ylabel('speed cm/s');
 % Set up binning and smoothers for place field analysis
 
 % Dombeck used 2.5 cm bins
-Xrange = max(x)-min(x);
-Yrange = max(y)-min(y);
+Xrange = xmax-xmin;
+Yrange = ymax-ymin;
 
 NumXBins = ceil(Xrange/cmperbin);
 NumYBins = ceil(Yrange/cmperbin);
 
-Xedges = (0:NumXBins)*cmperbin+min(x);
-Yedges = (0:NumYBins)*cmperbin+min(y);
+Xedges = (0:NumXBins)*cmperbin+xmin;
+Yedges = (0:NumYBins)*cmperbin+xmin;
 
 figure(2);hold on;plot(x,y);title('animal trajectory');
 

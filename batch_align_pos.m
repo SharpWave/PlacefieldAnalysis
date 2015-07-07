@@ -6,6 +6,10 @@ function [ ] = batch_align_pos(base_struct, reg_struct)
 %
 % INPUTS: mirror MD from MakeMouseSessionList, but must include at least
 % .Animal, .Date, .Session, AND .Room fields
+%
+% NOTE: this will not work well for the 2 environment experiment since it
+% does not account for any fish-eye distortions of the maze...should be
+% good for most comparisons between the same mazes, however
 
 %% Parameters
 ratio_use = 0.95; % ratio of the data to use for alignment - if 0.95, then
@@ -25,19 +29,26 @@ for j = 1: length(sesh)
     ChangeDirectory(sesh(j).Animal, sesh(j).Date ,sesh(j).Session);
     if ~isempty(regexpi(sesh(1).Room,'201b'))
         Pix2Cm = 0.15;
-        disp(['Using 0.15 for Pix2Cm for ' sesh(j).Date ' Session ' num2str(sesh.Session)])
+        disp(['Using 0.15 for Pix2Cm for ' sesh(j).Date ' Session ' num2str(sesh(j).Session)])
     else
         Pix2Cm = [];
         disp('Need room to get Pix2Cm')
     end
     load('ProcOut.mat', 'FT')
-    [x,y,~,FTalign,FToffset,FToffsetRear] = AlignImagingToTracking(Pix2Cm,FT);
+    % Align tracking and imaging
+    [x,y,speed,FT,FToffset,FToffsetRear] = AlignImagingToTracking(Pix2Cm,FT);
     sesh(j).x = x;
     sesh(j).y = y;
+    sesh(j).FT = FT;
+    sesh(j).speed = speed;
+    sesh(j).FToffset = FToffset;
+    sesh(j).FToffsetRear = FToffsetRear;
+    % Fix day-to-day mis-alignments in rotation of the maze
     [~,rot_x,rot_y, rot_ang] = sections(x,y,0);
     sesh(j).rot_x = rot_x;
     sesh(j).rot_y = rot_y;
     sesh(j).rot_ang = rot_ang;
+    
 end
 
 keyboard
@@ -97,8 +108,13 @@ sessions_included(2:length(reg_struct) + 1) = reg_struct;
 for j = 1:length(sesh)
     x_adj_cm = sesh(j).x_adj;
     y_adj_cm = sesh(j).y_adj;
+    FT = sesh(j).FT;
+    FTalign = sesh(j).FTalign;
+    FToffset = sesh(j).FToffset;
+    FToffsetRear = sesh(j).FToffsetRear;
     save(fullfile(sesh(j).Location,'\Pos_align.mat'),'x_adj_cm','y_adj_cm',...
-        'xmin','xmax','ymin','ymax','base_struct','sessions_included');
+        'xmin','xmax','ymin','ymax', 'speed', 'FT', 'FToffset', ...
+        'FToffsetRear', 'base_struct','sessions_included');
 
 end
 
