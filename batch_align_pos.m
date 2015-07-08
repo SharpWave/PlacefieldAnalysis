@@ -17,6 +17,17 @@ function [ ] = batch_align_pos(base_struct, reg_struct, varargin)
 %       data is scaled so that the middle 95% of it in each session aligns with
 %       the middle 95% in other sessions.  default = 0.95.
 %
+% OUTPUTS (saved in Pos_align.mat in working directory)
+%   'x_adj_cm','y_adj_cm': x and y positions converted to centimeters and
+%   scaled/aligned to the base session such that all sessions align
+%   'xmin','xmax','ymin','ymax': min and max position data for ALL sessions
+%   that can be sent to CalculatePlacefields such that the occupancy maps,
+%   heat maps, etc. are all identical in size
+%   'speed','FT','FToffset','FToffsetRear': calculated from  
+%    
+%   'base_struct':
+%   'sessions_included':
+%
 % NOTE: this will not work well for the 2 environment experiment since it
 % does not account for any fish-eye distortions of the maze...should be
 % good for most comparisons between the same mazes, however
