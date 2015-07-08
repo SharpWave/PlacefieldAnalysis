@@ -63,7 +63,7 @@ NumXBins = ceil(Xrange/cmperbin);
 NumYBins = ceil(Yrange/cmperbin);
 
 Xedges = (0:NumXBins)*cmperbin+xmin;
-Yedges = (0:NumYBins)*cmperbin+xmin;
+Yedges = (0:NumYBins)*cmperbin+ymin;
 
 figure(2);hold on;plot(x,y);title('animal trajectory');
 
