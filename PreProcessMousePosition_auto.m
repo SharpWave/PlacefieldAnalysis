@@ -113,8 +113,9 @@ close(h1); % Close Video Player
 
 % Get initial velocity profile for auto-thresholding
 vel_init = sqrt(diff(Xpix).^2+diff(Ypix).^2)/(time(2)-time(1));
-vel_init = [vel_init(1); vel_init];
-[fv xv] = ecdf(vel_init);
+vel_init = [vel_init; vel_init(end)];
+% vel_init = [vel_init(1); vel_init];
+[fv, xv] = ecdf(vel_init);
 if exist('auto_thresh','var')
     auto_vel_thresh = min(xv(fv > (1-auto_thresh)));
 else
@@ -145,7 +146,7 @@ MorePoints = 'y';
 length(time)
 
 n = 1;
-while (strcmp(MorePoints,'y'))
+while (strcmp(MorePoints,'y')) || isempty(MorePoints)
   subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');
   hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
   subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');
@@ -270,6 +271,14 @@ while (strcmp(MorePoints,'y'))
     subplot(4,3,7:9);
     vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)/(time(2)-time(1));
     plot(time(MouseOnMazeFrame:end-1),vel(MouseOnMazeFrame:end));
+    if auto_thresh_flag == 1
+        % Get indices for all remaining times that fall above the auto 
+        % threshold that have not been corrected
+        ind_red = auto_frames & time > time(eFrame); 
+        hold on
+        plot(time(ind_red),vel(ind_red),'ro');
+        hold off
+    end
     hold off;axis tight;xlabel('time (sec)');ylabel('velocity (units/sec)');
     xlim_use = get(gca,'XLim');
     
@@ -285,6 +294,7 @@ while (strcmp(MorePoints,'y'))
     
     % NRK edit
     save Pos_temp.mat Xpix Ypix xAVI yAVI MoMtime MouseOnMazeFrame
+    
   continue
   end
   
