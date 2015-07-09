@@ -36,6 +36,9 @@ try % Pull aligned data
     
     x = x_adj_cm;
     y = y_adj_cm;
+    % Note that xmin, xmax, ymin, and ymax have been pulled from
+    % Pos_align.mat.
+    
 catch % If no alignment has been performed, do it now.
     disp('Using position data that has NOT been aligned to other like sessions.')
     disp('NOT good for comparisons across sessions...run batch_align_pos for this.')

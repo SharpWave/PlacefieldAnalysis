@@ -295,11 +295,6 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
     % NRK edit
     save Pos_temp.mat Xpix Ypix xAVI yAVI MoMtime MouseOnMazeFrame
     
-    % output for debugging why this periodically jumps out of the correction
-    % while loop even though you never type "n" - does MorePoints get sent to
-    % some other letter somehow?
-    disp(['MorePoints = "' MorePoints '"'])
-    
   continue
   end
   
