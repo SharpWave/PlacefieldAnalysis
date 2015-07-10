@@ -9,20 +9,25 @@ function [ ] = batch_align_pos(base_struct, reg_struct, varargin)
 %        mirror MD from MakeMouseSessionList, but must include at least
 %       .Animal, .Date, .Session, AND .Room fields
 %
-% OPTIONAL INPUTS (specify as batch_align_pos(...,'manual_rot_overwrite,1,...)
-%   manual_rot_overwrite: default = 1, will use pre-existing rotation
-%       data in rotated.mat file in the working directory, 0 will prompt you to
-%       perform the rotation for each session
+% OPTIONAL INPUTS (specify as batch_align_pos(...,'manual_rot_overwrite,1,...):
+%
+%   manual_rot_overwrite: default = 1, will prompt you to
+%       perform the rotation for each session, 0 will use pre-existing rotation
+%       data in rotated.mat file in the working directory if it exists
+%
 %   ratio_use: ratio of the data to use for alignment - if 0.95, then
 %       data is scaled so that the middle 95% of it in each session aligns with
 %       the middle 95% in other sessions.  default = 0.95.
 %
-% OUTPUTS (saved in Pos_align.mat in working directory)
+% OUTPUTS (saved in Pos_align.mat in working directory):
+%
 %   'x_adj_cm','y_adj_cm': x and y positions converted to centimeters and
 %   scaled/aligned to the base session such that all sessions align
+%
 %   'xmin','xmax','ymin','ymax': min and max position data for ALL sessions
 %   that can be sent to CalculatePlacefields such that the occupancy maps,
 %   heat maps, etc. are all identical in size
+%
 %   'speed','FT','FToffset','FToffsetRear': calculated from  
 %    
 %   'base_struct':

@@ -1,8 +1,18 @@
-function [] = CalculatePlacefields(RoomStr)
-% [] = [] = CalculatePlacefieldsDOM(RoomStr)
+function [] = CalculatePlacefields(RoomStr,varargin)
+% [] = [] = CalculatePlacefields(RoomStr,varargin)
 % RoomStr, e.g. '201a'
+% varargin = 'progress_bar',1 uses a progress bar in lieu of spam to screen
+% while running StrapIt (needs ProgressBar function written by Stefan
+% Doerr)
 
 close all;
+
+progress_bar = 0;
+for j = 1:length(varargin)
+    if strcmpi('progress_bar',varargin{j})
+        progress_bar = varargin{j+1};
+    end
+end
 
 load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT caltrain NumFrames
 
@@ -39,7 +49,7 @@ try % Pull aligned data
     % Note that xmin, xmax, ymin, and ymax have been pulled from
     % Pos_align.mat.
     
-catch % If no alignment has been performed, do it now.
+catch % If no alignment has been performed, alert the user
     disp('Using position data that has NOT been aligned to other like sessions.')
     disp('NOT good for comparisons across sessions...run batch_align_pos for this.')
     [x,y,speed,FT,FToffset,FToffsetRear] = AlignImagingToTracking(Pix2Cm,FT);
@@ -122,10 +132,16 @@ end
 SpeedMap = SpeedMap./OccMap;
 RunSpeedMap = RunSpeedMap./RunOccMap;
 
+p = ProgressBar(NumNeurons);
 for i = 1:NumNeurons
   TMap{i} = calcmapdec(FT(i,:),RunOccMap,Xbin,Ybin,isrunning);
-  pval(i) = StrapIt(FT(i,:),RunOccMap,Xbin,Ybin,cmperbin,runepochs,isrunning,0);
+  pval(i) = StrapIt(FT(i,:),RunOccMap,Xbin,Ybin,cmperbin,runepochs,isrunning,...
+      0,'suppress_output', progress_bar);
+  if progress_bar == 1
+     p.progress; 
+  end
 end
+p.stop;
 
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
