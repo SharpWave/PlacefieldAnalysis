@@ -1,8 +1,23 @@
-function [] = PFstats( input_args )
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+function [] = PFstats(rot_to_std )
+%PFstats(rot_to_std )
+%   Calculate statistics on place-fields
+%
+% INPUTS
+%
+%   rot_to_sta: 0(default) uses data that has either not been aligned with
+%   other data or not rotated such that local cues align, 1 - uses data
+%   that has been rotated such that local cues align
 
-load PlaceMaps.mat; % x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin;
+if nargin == 0
+    rot_to_std = 0;
+end
+
+% Load appropriate PlaceMaps file
+if rot_to_std == 0
+    load PlaceMaps.mat; % x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin;
+elseif rot_to_std == 1
+   load PlaceMaps_rot_to_std.mat; 
+end
 
 % Which pixels are in place field?
 
@@ -91,7 +106,13 @@ for i = 1:NumNeurons
     end
 end
 
-save PFstats.mat PFpcthits PFnumhits PFactive PFnumepochs PFepochs MaxPF PFcentroid PFsize PFpixels -v7.3;
+if rot_to_std == 0
+    save PFstats.mat PFpcthits PFnumhits PFactive PFnumepochs PFepochs MaxPF PFcentroid PFsize PFpixels -v7.3;
+elseif rot_to_std == 1
+    save PFstats_rot_to_std.mat PFpcthits PFnumhits PFactive PFnumepochs PFepochs MaxPF PFcentroid PFsize PFpixels -v7.3;
+end
+
+end
 
 
 

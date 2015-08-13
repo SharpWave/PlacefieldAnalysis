@@ -1,17 +1,37 @@
 function [] = CalculatePlacefields(RoomStr,varargin)
 % [] = [] = CalculatePlacefields(RoomStr,varargin)
 % RoomStr, e.g. '201a'
-% varargin = 'progress_bar',1 uses a progress bar in lieu of spam to screen
-% while running StrapIt (needs ProgressBar function written by Stefan
-% Doerr)
+%
+% varargins
+%       -'progress_bar', - 1 uses a progress bar in lieu of spam to screen
+%       while running StrapIt (needs ProgressBar function written by Stefan
+%       Doerr)
+%
+%       -'exclude_frames' - 1 x n array of frames you wish to exclude from
+%       PFA analysis
+%
+%       -'rotate_to_std' - 1 =  use position data that has been rotated back
+%       such that all local cues are aligned (found in Pos_align_corr_std.mat). 
+%       if using pre-aligned data (run batch_align_pos)
+%       0 (default) = use data that has been aligned but NOT rotated back so that 
+%       distal cues align (found in Pos_align.mat)
 
 close all;
 
 progress_bar = 0;
+exclude_frames = [];
+rotate_to_std = 0;
 for j = 1:length(varargin)
     if strcmpi('progress_bar',varargin{j})
         progress_bar = varargin{j+1};
     end
+    if strcmpi('exclude_frames',varargin{j})
+        exclude_frames = varargin{j+1};
+    end
+    if strcmpi('rotate_to_std',varargin{j})
+        rotate_to_std = varargin{j+1};
+    end
+    
 end
 
 load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT caltrain NumFrames
@@ -41,13 +61,18 @@ for i = 1:NumNeurons
 end
 
 try % Pull aligned data
-    load Pos_align.mat
-    disp('Using position data that has been aligned to other like sessions.')
-    
+    if rotate_to_std == 0
+        load Pos_align.mat
+        disp('Using position data that has been aligned to other like sessions.')
+    elseif rotate_to_std == 1   
+        load Pos_align_std_corr.mat
+        disp('Using position data that has been aligned to other like sessions AND rotated so that local cues are aligned.')
+    end
+    % Note that xmin, xmax, ymin, and ymax (used below) have been pulled from
+    % Pos_align.mat.
     x = x_adj_cm;
     y = y_adj_cm;
-    % Note that xmin, xmax, ymin, and ymax have been pulled from
-    % Pos_align.mat.
+    
     
 catch % If no alignment has been performed, alert the user
     disp('Using position data that has NOT been aligned to other like sessions.')
@@ -112,22 +137,27 @@ RunSpeedMap = zeros(NumXBins,NumYBins); % average speed in bin while running
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Get vector of valid frames to use
+ind_use = ones(1,Flength);
+ind_use(exclude_frames) = zeros(1,length(exclude_frames)); % Send bad frames to zero
+frames_use = find(ind_use);
+
 % Calculate Occupancy maps, both for all times and for times limited to 
 % when the mouse was moving above minspeed
 % OccMap and RunOccMap are in # of visits
-
-for i = 1:Flength
-   if (isrunning(i))
-     RunOccMap(Xbin(i),Ybin(i)) = RunOccMap(Xbin(i),Ybin(i))+1;
-     if (i ~= Flength)
-       RunSpeedMap(Xbin(i),Ybin(i)) = RunSpeedMap(Xbin(i),Ybin(i))+speed(i);
-     end
-   end
-   
-   OccMap(Xbin(i),Ybin(i)) = OccMap(Xbin(i),Ybin(i))+1;
-   if (i ~= Flength)
-     SpeedMap(Xbin(i),Ybin(i)) = SpeedMap(Xbin(i),Ybin(i))+speed(i);
-   end
+for j = 1:length(frames_use)
+    i = frames_use(j); % Grab next good frame to use
+    if (isrunning(i))
+        RunOccMap(Xbin(i),Ybin(i)) = RunOccMap(Xbin(i),Ybin(i))+1;
+        if (i ~= Flength)
+            RunSpeedMap(Xbin(i),Ybin(i)) = RunSpeedMap(Xbin(i),Ybin(i))+speed(i);
+        end
+    end
+    
+    OccMap(Xbin(i),Ybin(i)) = OccMap(Xbin(i),Ybin(i))+1;
+    if (i ~= Flength)
+        SpeedMap(Xbin(i),Ybin(i)) = SpeedMap(Xbin(i),Ybin(i))+speed(i);
+    end
 end
 SpeedMap = SpeedMap./OccMap;
 RunSpeedMap = RunSpeedMap./RunOccMap;
@@ -145,8 +175,18 @@ p.stop;
 
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
+if rotate_to_std == 0
+    save_name = 'PlaceMaps.mat';
+elseif rotate_to_std == 1
+    save_name = 'PlaceMaps_rot_to_std.mat';
+end
 
-save PlaceMaps.mat x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin FToffset FToffsetRear isrunning cmperbin Xedges Yedges; 
+% save PlaceMaps.mat x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin FToffset FToffsetRear isrunning cmperbin Xedges Yedges; 
+save(save_name,'x', 'y', 't', 'xOutline', 'yOutline', 'speed','minspeed', 'FT', 'TMap',...
+    'RunOccMap', 'OccMap', 'SpeedMap', 'RunSpeedMap', 'NeuronImage', 'NeuronPixels',...
+    'cmperbin', 'pval', 'Xbin', 'Ybin', 'FToffset', 'FToffsetRear', 'isrunning',...
+    'cmperbin', 'Xedges', 'Yedges','-v7.3'); 
+
 return;
 
 
