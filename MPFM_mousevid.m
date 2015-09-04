@@ -64,7 +64,7 @@ for i = 1:NumFrames
     
     % load correct movie frame
     % calculate correct frame based on iteration and offsets
-    obj.currentTime = (i/20+(FToffset-16)/20);
+    obj.currentTime = aviFrame(i);
     v = readFrame(obj);
     
     imagesc(flipud(v));axis equal;hold on;

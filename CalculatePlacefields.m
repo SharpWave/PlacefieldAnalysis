@@ -30,7 +30,7 @@ for i = 1:NumNeurons
     xOutline{i} = temp{1}(:,2);
 end
 
-[x,y,speed,FT,FToffset,FToffsetRear] = AlignImagingToTracking(Pix2Cm,FT);
+[x,y,speed,FT,FToffset,FToffsetRear,aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
 
 Flength = length(x);
 
@@ -115,7 +115,7 @@ end
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
 
-save PlaceMaps.mat x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin FToffset FToffsetRear isrunning cmperbin Xedges Yedges; 
+save PlaceMaps.mat x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin FToffset FToffsetRear isrunning cmperbin Xedges Yedges aviFrame; 
 return;
 
 

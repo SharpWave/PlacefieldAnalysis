@@ -234,12 +234,13 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
         end
         
         % plot the current video frame
+        framesToCorrect(i*2);
         obj.currentTime = framesToCorrect(i*2)/aviSR;
         v = readFrame(obj);
         figure(1702);pause(0.01);
         gcf;
         imagesc(flipud(v));title('click here');
-        
+        keyboard;
         % plot the existing position marker on top
         hold on;plot(xAVI(sFrame+i*2),yAVI(sFrame+i*2),marker{marker_fr(i)},'MarkerSize',4);
 %         display(['Time is ' num2str(time(sFrame+i*2)) ' seconds. Click the mouse''s back']);
@@ -320,6 +321,10 @@ if size(pos_data,2) == 5
     motion = pos_data(:,5);
 end
 
+for i = 1:length(time)
+    AVIobjTime(i) = i/aviSR;
+end
+
 frame_rate_emp = round(1/mean(diff(time))); % empirical frame rate (frames/sec)
 
 % Generate times to match brain imaging data timestamps
@@ -346,8 +351,11 @@ xpos_interp = cellfun(@(a,b) lin_interp(time(a), Xpix_filt(a),...
 ypos_interp = cellfun(@(a,b) lin_interp(time(a), Ypix_filt(a),...
     b),time_index,time_test_cell);
 
+AVItime_interp = cellfun(@(a,b) lin_interp(time(a), AVIobjTime(a),...
+    b),time_index,time_test_cell);
+
 % Save all filtered data as well as raw data in case you want to go back
 % and fix an error you discover later on
-save Pos.mat xpos_interp ypos_interp time_interp start_time MoMtime Xpix Ypix xAVI yAVI MouseOnMazeFrame
+save Pos.mat xpos_interp ypos_interp time_interp start_time MoMtime Xpix Ypix xAVI yAVI MouseOnMazeFrame AVItime_interp
 
 end
