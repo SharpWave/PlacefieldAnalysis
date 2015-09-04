@@ -8,11 +8,11 @@ if (~exist('Pix2Cm'))
     Pix2Cm = 0.15;
     display('assuming room 201b');
     % factor for 201a is 0.0709
-else
-    if (strcmp(RoomStr,'201a'))
-        Pix2Cm = 0.0709;
-        display('Room 201a');
-    end
+% else
+%     if (strcmp(RoomStr,'201a'))
+%         Pix2Cm = 0.0709;
+%         display('Room 201a');
+%     end
 end
 
 aviSR = 30.0003;
