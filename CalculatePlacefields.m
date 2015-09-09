@@ -3,24 +3,28 @@ function [] = CalculatePlacefields(RoomStr,varargin)
 % RoomStr, e.g. '201a'
 %
 % varargins
-%       -'progress_bar', - 1 uses a progress bar in lieu of spam to screen
+%       -'progress_bar': 1 uses a progress bar in lieu of spam to screen
 %       while running StrapIt (needs ProgressBar function written by Stefan
 %       Doerr)
 %
-%       -'exclude_frames' - 1 x n array of frames you wish to exclude from
+%       -'exclude_frames': 1 x n array of frames you wish to exclude from
 %       PFA analysis
 %
-%       -'rotate_to_std' - 1 =  use position data that has been rotated back
+%       -'rotate_to_std': 1 =  use position data that has been rotated back
 %       such that all local cues are aligned (found in Pos_align_corr_std.mat). 
 %       if using pre-aligned data (run batch_align_pos)
 %       0 (default) = use data that has been aligned but NOT rotated back so that 
 %       distal cues align (found in Pos_align.mat)
+%
+%       -'name_append': enter in the name you want to append to the
+%       'PlaceMaps' file
 
 close all;
 
 progress_bar = 0;
 exclude_frames = [];
 rotate_to_std = 0;
+name_append = [];
 for j = 1:length(varargin)
     if strcmpi('progress_bar',varargin{j})
         progress_bar = varargin{j+1};
@@ -30,6 +34,9 @@ for j = 1:length(varargin)
     end
     if strcmpi('rotate_to_std',varargin{j})
         rotate_to_std = varargin{j+1};
+    end
+    if strcmpi('name_append',varargin{j})
+        name_append = ['_' varargin{j+1}];
     end
     
 end
@@ -177,16 +184,16 @@ p.stop;
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
 if rotate_to_std == 0
-    save_name = 'PlaceMaps.mat';
+    save_name = ['PlaceMaps' name_append '.mat'] ;
 elseif rotate_to_std == 1
-    save_name = 'PlaceMaps_rot_to_std.mat';
+    save_name = ['PlaceMaps_rot_to_std' name_append '.mat'];
 end
 
 % save PlaceMaps.mat x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin FToffset FToffsetRear isrunning cmperbin Xedges Yedges; 
 save(save_name,'x', 'y', 't', 'xOutline', 'yOutline', 'speed','minspeed', 'FT', 'TMap',...
     'RunOccMap', 'OccMap', 'SpeedMap', 'RunSpeedMap', 'NeuronImage', 'NeuronPixels',...
     'cmperbin', 'pval', 'Xbin', 'Ybin', 'FToffset', 'FToffsetRear', 'isrunning',...
-    'cmperbin', 'Xedges', 'Yedges','-v7.3'); 
+    'Xedges', 'Yedges','exclude_frames','-v7.3'); 
 
 return;
 
