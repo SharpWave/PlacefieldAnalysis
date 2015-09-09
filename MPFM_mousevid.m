@@ -8,11 +8,11 @@ if (~exist('Pix2Cm'))
     Pix2Cm = 0.15;
     display('assuming room 201b');
     % factor for 201a is 0.0709
-else
-    if (strcmp(RoomStr,'201a'))
-        Pix2Cm = 0.0709;
-        display('Room 201a');
-    end
+% else
+%     if (strcmp(RoomStr,'201a'))
+%         Pix2Cm = 0.0709;
+%         display('Room 201a');
+%     end
 end
 
 aviSR = 30.0003;
@@ -64,7 +64,7 @@ for i = 1:NumFrames
     
     % load correct movie frame
     % calculate correct frame based on iteration and offsets
-    obj.currentTime = (i/20+(FToffset-16)/20);
+    obj.currentTime = aviFrame(i);
     v = readFrame(obj);
     
     imagesc(flipud(v));axis equal;hold on;
