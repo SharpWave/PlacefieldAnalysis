@@ -34,14 +34,14 @@ end
 
 Flength = length(x);
 
-smspeed = convtrim(speed,ones(1,40))./40;
+smspeed = convtrim(speed,ones(1,2*SR))./(2*SR);
 
 runepochs = NP_FindSupraThresholdEpochs(smspeed,minspeed);
-isrunning = speed >= minspeed;
+isrunning = smspeed >= minspeed;
 
 t = (1:length(x))./SR;
 
-figure(1);plot(t,speed);axis tight;xlabel('time (sec)');ylabel('speed cm/s');
+figure(1);plot(t,smspeed);axis tight;xlabel('time (sec)');ylabel('speed cm/s');
 
 % Set up binning and smoothers for place field analysis
 
@@ -97,13 +97,13 @@ for i = 1:Flength
    if (isrunning(i))
      RunOccMap(Xbin(i),Ybin(i)) = RunOccMap(Xbin(i),Ybin(i))+1;
      if (i ~= Flength)
-       RunSpeedMap(Xbin(i),Ybin(i)) = RunSpeedMap(Xbin(i),Ybin(i))+speed(i);
+       RunSpeedMap(Xbin(i),Ybin(i)) = RunSpeedMap(Xbin(i),Ybin(i))+smspeed(i);
      end
    end
    
    OccMap(Xbin(i),Ybin(i)) = OccMap(Xbin(i),Ybin(i))+1;
    if (i ~= Flength)
-     SpeedMap(Xbin(i),Ybin(i)) = SpeedMap(Xbin(i),Ybin(i))+speed(i);
+     SpeedMap(Xbin(i),Ybin(i)) = SpeedMap(Xbin(i),Ybin(i))+smspeed(i);
    end
 end
 SpeedMap = SpeedMap./OccMap;
