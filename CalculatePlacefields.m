@@ -6,7 +6,7 @@ close all;
 
 load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT caltrain NumFrames
 
-minspeed = 7;
+minspeed = 1;
 SR = 20;
 Pix2Cm = 0.15;
 cmperbin = .25;
@@ -34,7 +34,9 @@ end
 
 Flength = length(x);
 
-runepochs = NP_FindSupraThresholdEpochs(speed,minspeed);
+smspeed = convtrim(speed,ones(1,40))./40;
+
+runepochs = NP_FindSupraThresholdEpochs(smspeed,minspeed);
 isrunning = speed >= minspeed;
 
 t = (1:length(x))./SR;
