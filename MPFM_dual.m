@@ -42,7 +42,7 @@ set(gcf,'Position',[534 72 1171 921]);
 
 aviobj = VideoWriter(out_avifile);
 aviobj.FrameRate = 20;
-aviobj.Quality = 10;
+aviobj.Quality = 90;
 open(aviobj);
 
 % assign each neuron a color
@@ -73,8 +73,11 @@ for i = 1:NumFrames
     v = flipud(v);
     
     % load correct Inscopix movie frame
-    frame = double(h5read(infile,'/Object',[1 1 ceil(t(i)/0.05)+FToffset 1],[Xdim Ydim 1 1]));
-    
+    try
+        frame = double(h5read(infile,'/Object',[1 1 ceil(t(i)/0.05)+FToffset 1],[Xdim Ydim 1 1]));
+    catch
+        return
+    end
     % rescale the frame to [0 256]
     frame(find(frame < clims(1))) = clims(1);
     frame(find(frame > clims(2))) = clims(2);
@@ -97,7 +100,7 @@ for i = 1:NumFrames
     
     
     
-    set(gcf,'Position',[534 72 1171 921]);
+    set(gcf,'Position',[1          41        1920         964]);
     % plot trajectory, hold on
     %     plot(xAVI,yAVI,'-','Color',[0.2 0.2 0.2]);hold on;axis tight;
     Xa = get(gca,'XLim');
