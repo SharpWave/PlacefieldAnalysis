@@ -84,6 +84,7 @@ for i = CellsToBrowse
     subplot(4,2,3);
     imagesc(temp);colorbar; %hold on;plot(Ybin,Xbin,'-r','Linewidth',0.5);hold off; % TRAJ COVERS UP PF Heatmap
     colormap(gca,c);
+    title(num2str(pval(i)));
     
     % Plot #4 : All placefields
     subplot(4,2,4);
