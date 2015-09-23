@@ -40,7 +40,7 @@ Ydim = size(NeuronImage{1},2);
 figure;
 set(gcf,'Position',[534 72 1171 921]);
 
-aviobj = VideoWriter(out_avifile);
+aviobj = VideoWriter(out_avifile,'MPEG-4');
 aviobj.FrameRate = 20;
 aviobj.Quality = 90;
 open(aviobj);
@@ -130,9 +130,10 @@ for i = 1:NumFrames
         catch
             keyboard;
         end
+        nt = size(NP_FindSupraThresholdEpochs(FT(j,:),eps),1);
         % plot PF outline (using correct color)
         b = bwboundaries(temp,4);
-        if (~isempty(b))
+        if (~isempty(b) & (pval(j) > 0.95) & (nt >= 3))
             
             yt = Yb2AVI(b{1}(:,2));
             xt = Xb2AVI(b{1}(:,1));

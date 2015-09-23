@@ -19,7 +19,7 @@ TMap = TMap./occmap;
 TMap(find(isnan(TMap))) = 0;
 Tsum = sum(TMap(:));
 
-sm = fspecial('gaussian',15,5);
+sm = fspecial('gaussian',30,10);
 TMap = imfilter(TMap,sm);
 
 TMap = TMap.*Tsum./sum(TMap(:)); % keep sum the same
