@@ -13,8 +13,8 @@ for i = 1:NumNeurons
     TRtimes = NP_FindSupraThresholdEpochs(FT(i,:),eps);
     InThreshes = Dtrace(i,(TRtimes(:,1)));
     AvgThresh(i) = mean(InThreshes);
-    PFT(i,:) = Dtrace > AvgThresh(i);
+    PFT(i,:) = Dtrace(i,:) > AvgThresh(i);
 end
 
-save Post_FT.mat PFT;
+save Post_FT.mat PFT AvgThresh;
 
