@@ -24,15 +24,16 @@ end
 % what should the threshold be?  peaks range from .1 to .35
 % i.e. the BEST place cell is active in 35% of crossings?
 
-Min_pT = 0.02; % minimum probability of transient
+
 NumNeurons = length(NeuronImage);
 NumFrames = length(Xbin);
 
 % some analysis using bwconncomp and regionprops
 
 for i = 1:NumNeurons
-    display(['calculating PF center for neuron ',int2str(i)])
-    ThreshMap = TMap{i}.*(TMap{i} > Min_pT);
+    display(['calculating PF center for neuron ',int2str(i)]);
+    peakval = max(TMap{i}(:));
+    ThreshMap = TMap{i}.*(TMap{i} > peakval/2);
     BoolMap = ThreshMap > 0;
     b{i} = bwconncomp(BoolMap);
     r{i} = regionprops(b{i},'area','centroid');

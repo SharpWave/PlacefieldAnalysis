@@ -62,7 +62,7 @@ end
 
 load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT caltrain NumFrames
 
-minspeed = 7;
+minspeed = 1;
 SR = 20;
 Pix2Cm = 0.15;
 
@@ -120,12 +120,14 @@ end
 
 Flength = length(x);
 
-runepochs = NP_FindSupraThresholdEpochs(speed,minspeed);
-isrunning = speed >= minspeed;
+smspeed = convtrim(speed,ones(1,2*SR))./(2*SR);
+
+runepochs = NP_FindSupraThresholdEpochs(smspeed,minspeed);
+isrunning = smspeed >= minspeed;
 
 t = (1:length(x))./SR;
 
-figure(1);plot(t,speed);axis tight;xlabel('time (sec)');ylabel('speed cm/s');
+figure(1);plot(t,smspeed);axis tight;xlabel('time (sec)');ylabel('speed cm/s');
 
 % Set up binning and smoothers for place field analysis
 
@@ -232,6 +234,7 @@ for j = 1:length(frames_use)
         RunOccMap_half{2} = RunOccMap - RunOccMap_half{1}; % Save 2nd half RunOccMap
         OccMap_half{2} = OccMap - OccMap_half{1};
     end
+
 end
 SpeedMap = SpeedMap./OccMap;
 RunSpeedMap = RunSpeedMap./RunOccMap;
