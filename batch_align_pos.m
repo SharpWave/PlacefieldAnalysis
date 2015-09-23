@@ -109,7 +109,7 @@ for j = 1: length(sesh)
     end
     load('ProcOut.mat', 'FT')
     % Align tracking and imaging
-    [x,y,speed,FT,FToffset,FToffsetRear] = AlignImagingToTracking(Pix2Cm,FT);
+    [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
     
     % Auto-rotate back to standard configuration if indicated
     if auto_rotate_to_std == 1
@@ -127,6 +127,7 @@ for j = 1: length(sesh)
     sesh(j).rot_x = rot_x;
     sesh(j).rot_y = rot_y;
     sesh(j).rot_ang = rot_ang;
+    sesh(j).aviFrame = aviFrame;
     
 end
 
@@ -203,15 +204,16 @@ for j = 1:length(sesh)
     FT = sesh(j).FT;
     FToffset = sesh(j).FToffset;
     FToffsetRear = sesh(j).FToffsetRear;
+    aviFrame = sesh(j).aviFrame;
     if auto_rotate_to_std == 0
     save(fullfile(sesh(j).Location,'\Pos_align.mat'),'x_adj_cm','y_adj_cm',...
         'xmin','xmax','ymin','ymax', 'speed', 'FT', 'FToffset', ...
-        'FToffsetRear', 'base_struct','sessions_included','auto_rotate_to_std');
+        'FToffsetRear', 'aviFrame', 'base_struct','sessions_included','auto_rotate_to_std');
     elseif auto_rotate_to_std == 1
         % finish here - save as a different filename?
         save(fullfile(sesh(j).Location,'\Pos_align_std_corr.mat'),'x_adj_cm','y_adj_cm',...
         'xmin','xmax','ymin','ymax', 'speed', 'FT', 'FToffset', ...
-        'FToffsetRear', 'base_struct','sessions_included','auto_rotate_to_std');
+        'FToffsetRear','aviFrame', 'base_struct', 'sessions_included', 'auto_rotate_to_std');
     end
 end
 

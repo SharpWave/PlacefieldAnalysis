@@ -31,7 +31,9 @@ for i = 1:size(goodepochs,1)
     end
 end
 
-placemap = calcmapdec(Trace,MovMap,Xbin,Ybin,isrunning);
+% Note that this uses the disk fiter only currently - need to return to
+% this in the future
+[placemap, ~] = calcmapdec(Trace, MovMap, Xbin, Ybin, isrunning, cmperbin);
 if suppress_output == 0
     ExperimentalH = DaveEntropy(placemap)
 elseif suppress_output == 1
@@ -72,7 +74,7 @@ parfor i = 1:NumShuffles
         end
     end
     
-    tempplacemap = calcmapdec(shufftrace,MovMap,Xbin,Ybin,isrunning);
+    [tempplacemap, ~] = calcmapdec(shufftrace, MovMap, Xbin, Ybin, isrunning, cmperbin);
     ShuffH(i) = DaveEntropy(tempplacemap);
     %figure(999);plot(Trace);hold on;plot(shufftrace,'-r');hold off;pause;
 end
