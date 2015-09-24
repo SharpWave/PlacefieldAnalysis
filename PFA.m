@@ -1,5 +1,11 @@
 function [] = PFA(roomstr,rawfile)
-% [] = PFA(roomstr)
+% PFA(roomstr, rawfile)
+%
+% PlaceField Analysis wrapper function - gets placefields, calculates
+% stats, then lets you browse through them and compare the extracted
+% traces.
+%
+% INPUTS
 % roomstr is the name of the room e.g. '201a'
 % rawfile is the same of the .h5 file containing the original movie
 

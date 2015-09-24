@@ -101,6 +101,9 @@ if exist('Pos_temp.mat','file') || exist('Pos.mat','file')
     if strcmpi(use_temp,'y')
         load(load_file,'Xpix', 'Ypix', 'xAVI', 'yAVI', 'MoMtime', 'MouseOnMazeFrame');
         MoMtime
+        if ~exist('MouseOnMazeFrame','var')
+           MouseOnMazeFrame = round((MoMtime-time(1))/(time(2)-time(1)))
+        end
     else
         MouseOnMazeFrame = input('on what frame number does Mr. Mouse arrive on the maze??? --->');
         MoMtime = (MouseOnMazeFrame)*(time(2)-time(1))+time(1)
@@ -240,7 +243,6 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
         figure(1702);pause(0.01);
         gcf;
         imagesc(flipud(v));title('click here');
-        keyboard;
         % plot the existing position marker on top
         hold on;plot(xAVI(sFrame+i*2),yAVI(sFrame+i*2),marker{marker_fr(i)},'MarkerSize',4);
 %         display(['Time is ' num2str(time(sFrame+i*2)) ' seconds. Click the mouse''s back']);

@@ -31,7 +31,13 @@ plexTime = (0:length(x)-1)/SR+start_time;
 pStart = findclosest(MoMtime,plexTime);
 x = x(pStart:end);
 y = y(pStart:end);
-aviFrame = AVItime_interp(pStart:end);
+
+if exist('aviFrame','var')
+    aviFrame = AVItime_interp(pStart:end);
+else
+    aviFrame = 'not found in Pos.mat';
+    disp('aviFrame not found in Pos.mat.  Skipping using for now')
+end
 
 speed = speed(pStart:end);
 plexTime = (1:length(x))/SR;
