@@ -120,7 +120,44 @@ end
 
 Flength = length(x);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Get vector of valid frames to use
+
+% If using aligned data, exclude any position data from outside the
+% specified limits (e.g. if you only want to look at one part of an arena).
+pos_ind_use = ones(1,Flength);
+if pos_align_use == 1
+    pos_ind_exclude = find(x < xmin | x > xmax | y < ymin | y > ymax);
+    pos_ind_use(pos_ind_exclude) = zeros(1,length(pos_ind_exclude));
+end
+% Exclude frames specified in the session structure
+ind_use = ones(1,Flength);
+ind_use_half{1} = ones(1,Flength);
+ind_use_half{2} = ones(1,Flength);
+half = round(Flength/2);
+% Check for edge case where exclude frames extend beyond the end of FT
+if max(exclude_frames) > Flength
+   temp = exclude_frames(exclude_frames <= Flength);
+   exclude_frames = temp;
+end
+ind_use(exclude_frames) = zeros(1,length(exclude_frames)); % Send bad frames to zero
+ind_use_half{1}(1:half) = zeros(1,length(1:half)); % Get 1st half valid indices
+ind_use_half{2}(half+1:length(ind_use)) = zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
+% Use only frames that are not excluded in the session structure AND are
+% within the specified arena limits
+frames_use_ind = ind_use & pos_ind_use;
+frames_use_ind_half{1} = ind_use_half{1} & pos_ind_use;
+frames_use_ind_half{2} = ind_use_half{2} & pos_ind_use;
+frames_use = find(frames_use_ind); 
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+
 smspeed = convtrim(speed,ones(1,2*SR))./(2*SR);
+% Adjust smspeed to include ONLY frames_use
+temp = zeros(size(smspeed));
+temp(frames_use_ind) = smspeed(frames_use_ind);
+smspeed = temp;
 
 runepochs = NP_FindSupraThresholdEpochs(smspeed,minspeed);
 isrunning = smspeed >= minspeed;
@@ -176,37 +213,6 @@ OccMap_half{1} = zeros(NumXBins,NumYBins); % total # of samples in bin - 1st hal
 OccMap_half{2} = zeros(NumXBins,NumYBins); % total # of samples in bin - 2nd half
 SpeedMap = zeros(NumXBins,NumYBins); % average speed in bin
 RunSpeedMap = zeros(NumXBins,NumYBins); % average speed in bin while running
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Get vector of valid frames to use
-
-% If using aligned data, exclude any position data from outside the
-% specified limits (e.g. if you only want to look at one part of an arena).
-pos_ind_use = ones(1,Flength);
-if pos_align_use == 1
-    pos_ind_exclude = find(x < xmin | x > xmax | y < ymin | y > ymax);
-    pos_ind_use(pos_ind_exclude) = zeros(1,length(pos_ind_exclude));
-end
-% Exclude frames specified in the session structure
-ind_use = ones(1,Flength);
-ind_use_half{1} = ones(1,Flength);
-ind_use_half{2} = ones(1,Flength);
-half = round(Flength/2);
-% Check for edge case where exclude frames extend beyond the end of FT
-if max(exclude_frames) > Flength
-   temp = exclude_frames(exclude_frames <= Flength);
-   exclude_frames = temp;
-end
-ind_use(exclude_frames) = zeros(1,length(exclude_frames)); % Send bad frames to zero
-ind_use_half{1}(1:half) = zeros(1,length(1:half)); % Get 1st half valid indices
-ind_use_half{2}(half+1:length(ind_use)) = zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
-% Use only frames that are not excluded in the session structure AND are
-% within the specified arena limits
-frames_use_ind = ind_use & pos_ind_use;
-frames_use_ind_half{1} = ind_use_half{1} & pos_ind_use;
-frames_use_ind_half{2} = ind_use_half{2} & pos_ind_use;
-frames_use = find(frames_use_ind); 
 
 % Calculate Occupancy maps, both for all times and for times limited to 
 % when the mouse was moving above minspeed
