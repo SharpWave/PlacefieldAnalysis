@@ -7,13 +7,13 @@ function [ pval, pvalI ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,is
 %           addition to entropy
 
 suppress_output = 0;
-use_mut_info = 0;
+calc_mut_info = 0;
 for j = 1:length(varargin)
     if strcmpi('suppress_output',varargin{j})
        suppress_output = varargin{j+1};
     end
     if strcmpi('use_mut_info',varargin{j})
-       use_mut_info = varargin{j+1};
+       calc_mut_info = varargin{j+1};
     end
     
 end
@@ -97,11 +97,10 @@ parfor i = 1:NumShuffles
 end
 
 pval = length(find(ShuffH > ExperimentalH))./NumShuffles;
-if use_mut_info == 1
+if calc_mut_info == 1
     pvalI = length(find(ShuffI > ExperimentalI))./NumShuffles;
 else
     pvalI = [];
-
 end
 
 end

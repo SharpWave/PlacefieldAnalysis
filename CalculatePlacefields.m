@@ -38,6 +38,7 @@ rotate_to_std = 0;
 name_append = [];
 calc_half = 0;
 cmperbin = 1; % Dombeck uses 2.5 cm bins, Ziv uses 2x2 bins with 3.75 sigma gaussian smoothing
+use_mut_info = 0; % default
 for j = 1:length(varargin)
     if strcmpi('progress_bar',varargin{j})
         progress_bar = varargin{j+1};
@@ -57,6 +58,9 @@ for j = 1:length(varargin)
     if strcmpi('calc_half',varargin{j})
        calc_half = varargin{j+1};
     end
+    if strcmpi(varargin{j},'use_mut_info')
+       use_mut_info = varargin{j+1};
+   end
     
 end
 
@@ -250,14 +254,14 @@ p = ProgressBar(NumNeurons);
 for i = 1:NumNeurons
   [TMap{i}, TMap_gauss{i}, TMap_unsmoothed{i}] = calcmapdec(FT(i,:), ...
       RunOccMap, Xbin, Ybin, isrunning & frames_use_ind, cmperbin);
-  pval(i) = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind,...
-      0, 'suppress_output', progress_bar);
+  [pval(i), pvalI(i)] = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind,...
+      0, 'suppress_output', progress_bar,'use_mut_info',use_mut_info);
   if calc_half == 1 % Calculate half-session TMaps and p-values
       for j = 1:2
           [TMap_half(j).Tmap{i}, TMap_half(j).TMap_gauss{i}, TMap_half(j).TMap_unsmoothed{i}] = ...
               calcmapdec(FT(i,:), RunOccMap, Xbin, Ybin, isrunning & frames_use_ind_half{j}, cmperbin);
-          pval_half{j}.pval(i) = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind_half{j},...
-              0, 'suppress_output', progress_bar);
+          [pval_half{j}.pval(i), pval_half{j}.pvalI(i)] = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind_half{j},...
+              0, 'suppress_output', progress_bar,'use_mut_info',use_mut_info);
       end
   else
       TMap_half = [];
@@ -284,7 +288,8 @@ save(save_name,'x', 'y', 't', 'xOutline', 'yOutline', 'speed','minspeed', ...
     'FT', 'TMap','TMap_gauss', 'TMap_unsmoothed', 'RunOccMap', 'OccMap', ...
     'SpeedMap', 'RunSpeedMap', 'NeuronImage', 'NeuronPixels',...
     'cmperbin', 'pval', 'Xbin', 'Ybin', 'FToffset', 'FToffsetRear', 'isrunning',...
-    'Xedges', 'Yedges','exclude_frames','aviFrame','TMap_half','pval_half','-v7.3'); 
+    'Xedges', 'Yedges','exclude_frames','aviFrame','TMap_half','pval_half',...
+    'pvalI','-v7.3'); 
 
 return;
 
