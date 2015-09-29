@@ -35,8 +35,6 @@ NumNeurons = length(NeuronImage);
 Xdim = size(NeuronImage{1},1);
 Ydim = size(NeuronImage{1},2);
 
-
-
 figure;
 set(gcf,'Position',[534 72 1171 921]);
 

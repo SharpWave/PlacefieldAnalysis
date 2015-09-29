@@ -1,5 +1,5 @@
-function [] = PFstats(rot_to_std )
-%PFstats(rot_to_std )
+function [] = PFstats(rot_to_std)
+%PFstats(rot_to_std, varargin )
 %   Calculate statistics on place-fields
 %
 % INPUTS
@@ -7,6 +7,7 @@ function [] = PFstats(rot_to_std )
 %   rot_to_sta: 0(default) uses data that has either not been aligned with
 %   other data or not rotated such that local cues align, 1 - uses data
 %   that has been rotated such that local cues align
+%
 
 if nargin == 0
     rot_to_std = 0;
