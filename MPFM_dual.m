@@ -1,6 +1,17 @@
-function [ output_args ] = MPFM_mousevid(out_avifile,infile,clims,Pix2Cm)
-% make a fun movie of our mouse and his placefields
-%   Detailed explanation goes here
+function [ ] = MPFM_dual(out_avifile,infile,clims,Pix2Cm)
+% MPFM_dual(out_avifile,infile,clims,Pix2Cm)
+%   make a fun movie of our mouse and his placefields
+%
+% INPUTS
+%   out_avifile: name of the output AVI file you wish to create
+%
+%   infile: h5 brain imaging file you wish to show
+%
+%   clims: ?
+%
+%   Pix2Cm: conversion factor, should be whatever you used for running
+%   CalculatePlacefields
+%
 
 close all;
 
