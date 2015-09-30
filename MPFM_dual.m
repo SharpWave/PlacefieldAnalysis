@@ -73,6 +73,29 @@ for i = 1:length(Yedges)
     Yb2AVI(i) = (Yedges(i)+Yd/2)/Pix2Cm*0.625;
 end
 
+% for each neuron
+for j = 1:NumNeurons
+    % get PF outline (if avail)
+    WhichField = MaxPF(j);
+    temp = zeros(size(TMap{1}));
+    tp = PFpixels{j,WhichField};
+    temp(tp) = 1;
+    nt(j) = size(NP_FindSupraThresholdEpochs(FT(j,:),eps),1);
+    % plot PF outline (using correct color)
+    b = bwboundaries(temp,4);
+    
+    if(~isempty(b))
+    yt{j} = Yb2AVI(b{1}(:,2));
+    xt{j} = Xb2AVI(b{1}(:,1));
+    xt{j}= xt{j}+(rand(size(xt{j}))-0.5)/2;
+    yt{j}= yt{j}+(rand(size(yt{j}))-0.5)/2;
+    %colors(j,:)
+    %plot(xt,yt,'Color',colors(j,:),'LineWidth',5);
+    end
+end
+
+
+
 for i = 1:NumFrames
     
     % load correct Plexon movie frame
@@ -130,26 +153,10 @@ for i = 1:NumFrames
     
     % for each active neuron
     for j = an'
-        % get PF outline (if avail)
-        WhichField = MaxPF(j);
-        temp = zeros(size(TMap{1}));
-        tp = PFpixels{j,WhichField};
-        try
-            temp(tp) = 1;
-        catch
-            keyboard;
-        end
-        nt = size(NP_FindSupraThresholdEpochs(FT(j,:),eps),1);
-        % plot PF outline (using correct color)
-        b = bwboundaries(temp,4);
-        if (~isempty(b) & (pval(j) > 0.95) & (nt >= 3))
+        
+        if ((pval(j) > 0.95) & (nt(j) >= 3))
             
-            yt = Yb2AVI(b{1}(:,2));
-            xt = Xb2AVI(b{1}(:,1));
-            xt= xt+(rand(size(xt))-0.5)/2;
-            yt= yt+(rand(size(yt))-0.5)/2;
-            %colors(j,:)
-            plot(xt,yt,'Color',colors(j,:),'LineWidth',5);
+            plot(xt{j},yt{j},'Color',colors(j,:),'LineWidth',5);
             
             
         end

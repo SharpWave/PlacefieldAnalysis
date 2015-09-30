@@ -227,13 +227,13 @@ for j = 1:length(frames_use)
     if (isrunning(i))
         RunOccMap(Xbin(i),Ybin(i)) = RunOccMap(Xbin(i),Ybin(i))+1;
         if (i ~= Flength)
-            RunSpeedMap(Xbin(i),Ybin(i)) = RunSpeedMap(Xbin(i),Ybin(i))+speed(i);
+            RunSpeedMap(Xbin(i),Ybin(i)) = RunSpeedMap(Xbin(i),Ybin(i))+smspeed(i);
         end
     end
     
     OccMap(Xbin(i),Ybin(i)) = OccMap(Xbin(i),Ybin(i))+1;
     if (i ~= Flength)
-        SpeedMap(Xbin(i),Ybin(i)) = SpeedMap(Xbin(i),Ybin(i))+speed(i);
+        SpeedMap(Xbin(i),Ybin(i)) = SpeedMap(Xbin(i),Ybin(i))+smspeed(i);
     end
     
     
