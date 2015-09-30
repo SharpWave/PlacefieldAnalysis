@@ -100,7 +100,7 @@ pval = length(find(ShuffH > ExperimentalH))./NumShuffles;
 if calc_mut_info == 1
     pvalI = length(find(ShuffI > ExperimentalI))./NumShuffles;
 else
-    pvalI = [];
+    pvalI = nan;
 end
 
 end
