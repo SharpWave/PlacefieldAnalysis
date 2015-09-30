@@ -32,7 +32,7 @@ pStart = findclosest(MoMtime,plexTime);
 x = x(pStart:end);
 y = y(pStart:end);
 
-if exist('aviFrame','var')
+if exist('AVItime_interp','var')
     aviFrame = AVItime_interp(pStart:end);
 else
     aviFrame = 'not found in Pos.mat';
