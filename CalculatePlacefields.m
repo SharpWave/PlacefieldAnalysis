@@ -13,7 +13,7 @@ function [] = CalculatePlacefields(RoomStr,varargin)
 %       while running StrapIt (needs ProgressBar function written by Stefan
 %       Doerr)
 %
-%       -'exclude_frames': 1 x n array of frames you wish to exclude from
+%       -'exclude_frames': 1 x n array of frame numbers you wish to exclude from
 %       PFA analysis
 %
 %       -'rotate_to_std': 1 =  use position data that has been rotated back
@@ -29,6 +29,9 @@ function [] = CalculatePlacefields(RoomStr,varargin)
 %
 %       -'calc_half': 0 = default. 1 = calculate TMap and pvalues for 1st
 %       and 2nd half of session along with whole session maps
+%
+%       -'mispeed': threshold for calculating placemaps.  Any values below
+%           are not used. 1 cm/s = default.  
 
 close all;
 
@@ -39,6 +42,7 @@ name_append = [];
 calc_half = 0;
 cmperbin = 1; % Dombeck uses 2.5 cm bins, Ziv uses 2x2 bins with 3.75 sigma gaussian smoothing
 use_mut_info = 0; % default
+minspeed = 1; % cm/s, default
 for j = 1:length(varargin)
     if strcmpi('progress_bar',varargin{j})
         progress_bar = varargin{j+1};
@@ -59,14 +63,15 @@ for j = 1:length(varargin)
        calc_half = varargin{j+1};
     end
     if strcmpi(varargin{j},'use_mut_info')
-       use_mut_info = varargin{j+1};
-   end
-    
+        use_mut_info = varargin{j+1};
+    end
+    if strcmpi(varargin{j},'minspeed')
+        minspeed = varargin{j+1};
+    end
 end
 
 load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT caltrain NumFrames
 
-minspeed = 1;
 SR = 20;
 Pix2Cm = 0.15;
 
@@ -115,7 +120,7 @@ try % Pull aligned data
 catch % If no alignment has been performed, alert the user
     disp('Using position data that has NOT been aligned to other like sessions.')
     disp('NOT good for comparisons across sessions...run batch_align_pos for this.')
-    keyboard
+%     keyboard
     [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
     xmax = max(x); xmin = min(x);
     ymax = max(y); ymin = min(y);

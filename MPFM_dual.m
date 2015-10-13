@@ -96,7 +96,7 @@ end
 
 
 
-for i = 1:NumFrames
+for i = 5400:6600%1:NumFrames
     
     % load correct Plexon movie frame
     % calculate correct frame based on iteration and offsets
