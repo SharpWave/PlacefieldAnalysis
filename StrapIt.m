@@ -1,13 +1,21 @@
-function [ pval ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,isrunning,toplot,varargin)
+function [ pval, pvalI ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,isrunning,toplot,varargin)
 % function [ pval ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,toplot,varargin)
-% varargin = 'suppress_output',1 suppresses output of ExperimentalH, 0 =
+% pval uses entropy, pvalI uses mutual information
+% varargin = 'suppress_output',1 supresses output of ExperimentalH, 0 =
 % default
+%           'use_mut_info': use mutual information metric for pvalues in
+%           addition to entropy
 
 suppress_output = 0;
+calc_mut_info = 0;
 for j = 1:length(varargin)
     if strcmpi('suppress_output',varargin{j})
        suppress_output = varargin{j+1};
     end
+    if strcmpi('use_mut_info',varargin{j})
+       calc_mut_info = varargin{j+1};
+    end
+    
 end
 
 if (nargin < 8)
@@ -31,11 +39,19 @@ for i = 1:size(goodepochs,1)
     end
 end
 
-placemap = calcmapdec(Trace,MovMap,Xbin,Ybin,isrunning);
+% Note that this uses the disk fiter only currently - need to return to
+% this in the future
+[placemap, ~, placemap_nosmooth] = calcmapdec(Trace, MovMap, Xbin, Ybin, isrunning, cmperbin);
 if suppress_output == 0
     ExperimentalH = DaveEntropy(placemap)
+    if calc_mut_info == 1
+       ExperimentalI = calc_mutual_information(placemap_nosmooth,MovMap)
+    end
 elseif suppress_output == 1
     ExperimentalH = DaveEntropy(placemap);
+    if calc_mut_info == 1
+       ExperimentalI = calc_mutual_information(placemap_nosmooth,MovMap);
+    end
 end
     
 
@@ -72,12 +88,22 @@ parfor i = 1:NumShuffles
         end
     end
     
-    tempplacemap = calcmapdec(shufftrace,MovMap,Xbin,Ybin,isrunning);
+    [tempplacemap, ~] = calcmapdec(shufftrace, MovMap, Xbin, Ybin, isrunning, cmperbin);
     ShuffH(i) = DaveEntropy(tempplacemap);
+    if calc_mut_info == 1
+       ShuffI(i) = calc_mutual_information(tempplacemap,MovMap);
+    end
     %figure(999);plot(Trace);hold on;plot(shufftrace,'-r');hold off;pause;
 end
 
 pval = length(find(ShuffH > ExperimentalH))./NumShuffles;
+if calc_mut_info == 1
+    pvalI = length(find(ShuffI > ExperimentalI))./NumShuffles;
+else
+    pvalI = nan;
+end
+
+end
 
 
         

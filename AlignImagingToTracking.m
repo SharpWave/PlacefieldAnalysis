@@ -1,4 +1,4 @@
-function [x,y,speed,FT,FToffset,FToffsetRear] = AlignImagingToTracking(Pix2Cm,FT)
+function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame] = AlignImagingToTracking(Pix2Cm,FT)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 SR = 20;
@@ -31,6 +31,14 @@ plexTime = (0:length(x)-1)/SR+start_time;
 pStart = findclosest(MoMtime,plexTime);
 x = x(pStart:end);
 y = y(pStart:end);
+
+if exist('AVItime_interp','var')
+    aviFrame = AVItime_interp(pStart:end);
+else
+    aviFrame = 'not found in Pos.mat';
+    disp('aviFrame not found in Pos.mat.  Skipping using for now')
+end
+
 speed = speed(pStart:end);
 plexTime = (1:length(x))/SR;
 
@@ -48,6 +56,7 @@ else
     speed = speed(1:Flength);
     x = x(1:Flength);
     y = y(1:Flength);
+    aviFrame = aviFrame(1:Flength);
 end
 
 if (length(speed) < length(x))
@@ -62,11 +71,13 @@ HalfWindow = 10;
 % shift position and speed right
 x = [zeros(1,HalfWindow),x(1:end-HalfWindow)];
 y = [zeros(1,HalfWindow),y(1:end-HalfWindow)];
+aviFrame = [zeros(1,HalfWindow),aviFrame(1:end-HalfWindow)];
 speed = [zeros(1,HalfWindow),speed(1:end-HalfWindow)];
 
 % chop the first HalfWindow
 x = x(HalfWindow+1:end);
 y = y(HalfWindow+1:end);
+aviFrame = aviFrame(HalfWindow+1:end);
 speed = speed(HalfWindow+1:end);
 FT = FT(:,HalfWindow+1:end);
 
