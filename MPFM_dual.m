@@ -1,6 +1,29 @@
-function [ output_args ] = MPFM_mousevid(out_avifile,infile,clims,Pix2Cm)
-% make a fun movie of our mouse and his placefields
-%   Detailed explanation goes here
+function [ ] = MPFM_dual(out_avifile,infile,clims,Pix2Cm,varargin)
+% MPFM_dual(out_avifile,infile,clims,Pix2Cm)
+%   make a fun movie of our mouse and his placefields
+%
+% INPUTS
+%   out_avifile: name of the output AVI file you wish to create
+%
+%   infile: h5 brain imaging file you wish to show
+%
+%   clims: ?
+%
+%   Pix2Cm: conversion factor, should be whatever you used for running
+%   CalculatePlacefields
+%
+%   varargins:
+%       'brain_only': plot brain imaging only
+%       'PF_only': plot placefields on video tracking only
+
+video_type = 1; % default to show both videos side-by-side
+if length(varargin) == 1
+   if strcmpi(varargin{1},'brain_only')
+       video_type = 2;
+   elseif strcmpi(varargin{1},'PF_only')
+       video_type = 3;
+   end
+end
 
 close all;
 
@@ -35,8 +58,6 @@ NumNeurons = length(NeuronImage);
 Xdim = size(NeuronImage{1},1);
 Ydim = size(NeuronImage{1},2);
 
-
-
 figure;
 set(gcf,'Position',[534 72 1171 921]);
 
@@ -55,6 +76,9 @@ yAVI = y/Pix2Cm*0.625;
 % convert Xbin and Ybin to x and y
 Xd = Xedges(2)-Xedges(1);
 Yd = Yedges(2)-Yedges(1);
+if video_type == 1 || video_type == 3
+
+end
 
 for i = 1:length(Xedges)
     Xb2AVI(i) = (Xedges(i)+Xd/2)/Pix2Cm*0.625;
@@ -76,24 +100,29 @@ for j = 1:NumNeurons
     b = bwboundaries(temp,4);
     
     if(~isempty(b))
-    yt{j} = Yb2AVI(b{1}(:,2));
-    xt{j} = Xb2AVI(b{1}(:,1));
-    xt{j}= xt{j}+(rand(size(xt{j}))-0.5)/2;
-    yt{j}= yt{j}+(rand(size(yt{j}))-0.5)/2;
-    %colors(j,:)
-    %plot(xt,yt,'Color',colors(j,:),'LineWidth',5);
+        yt{j} = Yb2AVI(b{1}(:,2));
+        xt{j} = Xb2AVI(b{1}(:,1));
+        xt{j}= xt{j}+(rand(size(xt{j}))-0.5)/2;
+        yt{j}= yt{j}+(rand(size(yt{j}))-0.5)/2;
+        %colors(j,:)
+        %plot(xt,yt,'Color',colors(j,:),'LineWidth',5);
     end
 end
 
 
 
-for i = 1:NumFrames
+for i = 5400:7800%1:NumFrames
     
     % load correct Plexon movie frame
     % calculate correct frame based on iteration and offsets
     obj.currentTime = aviFrame(i);
     v = readFrame(obj);
     v = flipud(v);
+    if video_type == 1
+        image_offset = size(v,2);
+    elseif video_type == 2
+        image_offset = 0;
+    end
     
     % load correct Inscopix movie frame
     try
@@ -108,60 +137,76 @@ for i = 1:NumFrames
     %keyboard;
     frame = uint8(frame/(clims(2)-clims(1))*256);
     
-    
-    combXdim = max(size(v,1),size(frame,1));
-    combYdim = size(v,2)+size(frame,2);
+    if video_type == 1
+        combXdim = max(size(v,1),size(frame,1));
+        combYdim = image_offset+size(frame,2);
+    elseif video_type == 2
+        combXdim = size(frame,1);
+        combYdim = size(frame,2);
+    elseif video_type == 3
+        combXdim = size(v,1);
+        combYdim = size(v,2);
+    end
     
     temp = zeros(combXdim,combYdim,3);
+    if video_type ~= 2 % Plot tracking
+        temp(1:size(v,1),1:size(v,2),:) = v;
+    end
     
-    temp(1:size(v,1),1:size(v,2),:) = v;
-    temp(1:size(frame,1),size(v,2)+1:end,3) = frame;
-    temp(1:size(frame,1),size(v,2)+1:end,2) = frame;
-    temp(1:size(frame,1),size(v,2)+1:end,1) = frame;
+    if video_type ~=3 % Plot brain imaging
+        temp(1:size(frame,1),image_offset+1:end,3) = frame;
+        temp(1:size(frame,1),image_offset+1:end,2) = frame;
+        temp(1:size(frame,1),image_offset+1:end,1) = frame;
+    end
     image(uint8(temp));
     axis equal;axis tight; axis off;hold on;
-    
-    
-    
-    set(gcf,'Position',[1          41        1920         964]);
-    % plot trajectory, hold on
-    %     plot(xAVI,yAVI,'-','Color',[0.2 0.2 0.2]);hold on;axis tight;
     Xa = get(gca,'XLim');
     Ya = get(gca,'YLim');
     
-    
+    if video_type == 1
+        set(gcf,'Position',[1          41        1920         964]);
+    else
+        set(gcf,'Position',[1          41        1050        964]);
+    end
+    % plot trajectory, hold on
+    %     plot(xAVI,yAVI,'-','Color',[0.2 0.2 0.2]);hold on;axis tight;
     
     % find active neurons
     an = find(FT(:,i));
-    
-    for j = 1:length(an)
-        hold on;
-        plot(xOutline{an(j)}+size(v,2),yOutline{an(j)},'-r','LineWidth',3,'Color',colors(an(j),:));
+    hold on;
+    if video_type == 1 || video_type == 2 % Plot Neuron outlines
+        for j = 1:length(an)
+            plot(xOutline{an(j)}+image_offset,yOutline{an(j)},'-r','LineWidth',3,'Color',colors(an(j),:));
+        end
     end
     
     xg = [];
     yg = [];
     
-    % for each active neuron
-    for j = an'
-        
-        if ((pval(j) > 0.95) & (nt(j) >= 3))
+    if video_type ~=2
+        % for each active neuron
+        for j = an'
             
-            plot(xt{j},yt{j},'Color',colors(j,:),'LineWidth',5);
-            
-            
+            if ((pval(j) > 0.95) & (nt(j) >= 3))
+                
+                plot(xt{j},yt{j},'Color',colors(j,:),'LineWidth',5);
+                
+            end
         end
+        end
+    
+    if video_type ~= 2
+        % plot mouse marker
+        if (isrunning(i))
+            mf = 'r';
+        else
+            mf = 'k';
+        end
+        
+        plot(Xb2AVI(Xbin(i)),Yb2AVI(Ybin(i)),'ok','MarkerSize',10,'MarkerFaceColor',mf);
+        set(gca,'XLim',Xa,'YLim',Ya);
     end
     
-    % plot mouse marker
-    if (isrunning(i))
-        mf = 'r';
-    else
-        mf = 'k';
-    end
-    
-    plot(Xb2AVI(Xbin(i)),Yb2AVI(Ybin(i)),'ok','MarkerSize',10,'MarkerFaceColor',mf);
-    set(gca,'XLim',Xa,'YLim',Ya);
     
     % getframe
     F = getframe(gcf);
@@ -169,4 +214,7 @@ for i = 1:NumFrames
     writeVideo(aviobj,F);
     hold off;
     gcf;
+    
+end
+
 end
