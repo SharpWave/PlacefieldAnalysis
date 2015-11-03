@@ -273,6 +273,7 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
     figure(555);
     subplot(4,3,7:9);
     vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)/(time(2)-time(1));
+    vel = [ vel; vel(end)];
     plot(time(MouseOnMazeFrame:end-1),vel(MouseOnMazeFrame:end));
     if auto_thresh_flag == 1
         % Get indices for all remaining times that fall above the auto 
