@@ -112,7 +112,7 @@ catch % If no alignment has been performed, alert the user
     disp('Using position data that has NOT been aligned to other like sessions.')
     disp('NOT good for comparisons across sessions...run batch_align_pos for this.')
     keyboard
-    [x,y,speed,FT,~,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
+    [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
     xmax = max(x); xmin = min(x);
     ymax = max(y); ymin = min(y);
     pos_align_use = 0;
