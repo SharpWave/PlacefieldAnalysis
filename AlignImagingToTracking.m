@@ -8,7 +8,7 @@ try
     x = xpos_interp;
     y = ypos_interp;
 catch
-    [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition('Video.DVT');
+    [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_auto('Video.DVT');
 end
 
 x = xpos_interp;
@@ -32,7 +32,7 @@ pStart = findclosest(MoMtime,plexTime);
 x = x(pStart:end);
 y = y(pStart:end);
 
-if exist('aviFrame','var')
+if exist('AVItime_interp','var')
     aviFrame = AVItime_interp(pStart:end);
 else
     aviFrame = 'not found in Pos.mat';
