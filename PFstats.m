@@ -1,23 +1,39 @@
-function [] = PFstats( input_args )
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+function [] = PFstats(rot_to_std )
+%PFstats(rot_to_std )
+%   Calculate statistics on place-fields
+%
+% INPUTS
+%
+%   rot_to_sta: 0(default) uses data that has either not been aligned with
+%   other data or not rotated such that local cues align, 1 - uses data
+%   that has been rotated such that local cues align
 
-load PlaceMaps.mat; % x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin;
+if nargin == 0
+    rot_to_std = 0;
+end
+
+% Load appropriate PlaceMaps file
+if rot_to_std == 0
+    load PlaceMaps.mat; % x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin;
+elseif rot_to_std == 1
+   load PlaceMaps_rot_to_std.mat; 
+end
 
 % Which pixels are in place field?
 
 % what should the threshold be?  peaks range from .1 to .35
 % i.e. the BEST place cell is active in 35% of crossings?
 
-Min_pT = 0.02; % minimum probability of transient
+
 NumNeurons = length(NeuronImage);
 NumFrames = length(Xbin);
 
 % some analysis using bwconncomp and regionprops
 
 for i = 1:NumNeurons
-    display(['calculating PF center for neuron ',int2str(i)])
-    ThreshMap = TMap{i}.*(TMap{i} > Min_pT);
+    display(['calculating PF center for neuron ',int2str(i)]);
+    peakval = max(TMap{i}(:));
+    ThreshMap = TMap{i}.*(TMap{i} > peakval/2);
     BoolMap = ThreshMap > 0;
     b{i} = bwconncomp(BoolMap);
     r{i} = regionprops(b{i},'area','centroid');
@@ -91,7 +107,13 @@ for i = 1:NumNeurons
     end
 end
 
-save PFstats.mat PFpcthits PFnumhits PFactive PFnumepochs PFepochs MaxPF PFcentroid PFsize PFpixels -v7.3;
+if rot_to_std == 0
+    save PFstats.mat PFpcthits PFnumhits PFactive PFnumepochs PFepochs MaxPF PFcentroid PFsize PFpixels -v7.3;
+elseif rot_to_std == 1
+    save PFstats_rot_to_std.mat PFpcthits PFnumhits PFactive PFnumepochs PFepochs MaxPF PFcentroid PFsize PFpixels -v7.3;
+end
+
+end
 
 
 

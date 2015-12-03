@@ -1,5 +1,14 @@
-function [ pval ] = StrapIt2(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,isrunning,toplot)
-% function [ pval ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,toplot)
+function [ pval ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,isrunning,toplot,varargin)
+% function [ pval ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,toplot,varargin)
+% varargin = 'suppress_output',1 suppresses output of ExperimentalH, 0 =
+% default
+
+suppress_output = 0;
+for j = 1:length(varargin)
+    if strcmpi('suppress_output',varargin{j})
+       suppress_output = varargin{j+1};
+    end
+end
 
 if (nargin < 8)
     toplot = 0;
@@ -22,8 +31,15 @@ for i = 1:size(goodepochs,1)
     end
 end
 
-placemap = calcmapdec(Trace,MovMap,Xbin,Ybin,isrunning);
-ExperimentalH = DaveEntropy(placemap)
+% Note that this uses the disk fiter only currently - need to return to
+% this in the future
+[placemap, ~] = calcmapdec(Trace, MovMap, Xbin, Ybin, isrunning, cmperbin);
+if suppress_output == 0
+    ExperimentalH = DaveEntropy(placemap)
+elseif suppress_output == 1
+    ExperimentalH = DaveEntropy(placemap);
+end
+    
 
 runlengths = goodepochs(:,2)-goodepochs(:,1)+1;
 runused = zeros(size(runlengths));
@@ -58,7 +74,7 @@ parfor i = 1:NumShuffles
         end
     end
     
-    tempplacemap = calcmapdec(shufftrace,MovMap,Xbin,Ybin,isrunning);
+    [tempplacemap, ~] = calcmapdec(shufftrace, MovMap, Xbin, Ybin, isrunning, cmperbin);
     ShuffH(i) = DaveEntropy(tempplacemap);
     %figure(999);plot(Trace);hold on;plot(shufftrace,'-r');hold off;pause;
 end
