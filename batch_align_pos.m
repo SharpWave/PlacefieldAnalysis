@@ -43,6 +43,9 @@ function [ ] = batch_align_pos(base_struct, reg_struct, varargin)
 %       manually draw limits for the 1st and 3rd registered sessions but
 %       not the base session or 2nd registered session)
 %
+%       name_append: this will be appended to the Pos_align or
+%       Pos_align_std_corr if you specify it
+%
 % OUTPUTS (saved in Pos_align.mat in working directory, or Pos_align_std_corr.mat
 %          if you choose to auto-rotate back):
 %
@@ -76,6 +79,7 @@ ymin = 20; % where you want to set the minimum y-value
 
 %% 0: Get varargins
 
+name_append = ''; % default
 for j = 1:length(varargin)
    if strcmpi(varargin{j},'manual_rot_overwrite')
        manual_rot_overwrite = varargin{j+1};
@@ -89,6 +93,9 @@ for j = 1:length(varargin)
    if strcmpi(varargin{j},'manual_limits')
       manual_limits = varargin{j+1}; 
    end
+   if strcmpi(varargin{j},'name_append')
+      name_append = varargin{j+1}; 
+   end
 end
 
 %% 1: Load all sessions, and align to imaging data
@@ -100,9 +107,15 @@ sesh(2:length(reg_struct) + 1) = reg_struct;
 currdir = cd;
 for j = 1: length(sesh)
     ChangeDirectory(sesh(j).Animal, sesh(j).Date ,sesh(j).Session);
-    if ~isempty(regexpi(sesh(1).Room,'201b'))
+    if ~isempty(regexpi(sesh(j).Room,'201b'))
         Pix2Cm = 0.15;
         disp(['Using 0.15 for Pix2Cm for ' sesh(j).Date ' Session ' num2str(sesh(j).Session)])
+    elseif ~isempty(regexpi(sesh(j).Room,'201a - 2015'))
+        Pix2Cm = 0.0874;
+        disp(['Using 0.0875 for Pix2Cm for ' sesh(j).Date ' Session ' num2str(sesh(j).Session)])
+    elseif ~isempty(regexpi(sesh(j).Room,'201a'))
+        Pix2Cm = 0.0709;
+        disp(['Using 0.0709 for Pix2Cm for ' sesh(j).Date ' Session ' num2str(sesh(j).Session)])    
     else
         Pix2Cm = [];
         disp('Need room to get Pix2Cm')
@@ -206,12 +219,12 @@ for j = 1:length(sesh)
     FToffsetRear = sesh(j).FToffsetRear;
     aviFrame = sesh(j).aviFrame;
     if auto_rotate_to_std == 0
-    save(fullfile(sesh(j).Location,'\Pos_align.mat'),'x_adj_cm','y_adj_cm',...
+    save(fullfile(sesh(j).Location,['Pos_align' name_append '.mat']),'x_adj_cm','y_adj_cm',...
         'xmin','xmax','ymin','ymax', 'speed', 'FT', 'FToffset', ...
         'FToffsetRear', 'aviFrame', 'base_struct','sessions_included','auto_rotate_to_std');
     elseif auto_rotate_to_std == 1
         % finish here - save as a different filename?
-        save(fullfile(sesh(j).Location,'\Pos_align_std_corr.mat'),'x_adj_cm','y_adj_cm',...
+        save(fullfile(sesh(j).Location,['Pos_align_std_corr' name_append '.mat']),'x_adj_cm','y_adj_cm',...
         'xmin','xmax','ymin','ymax', 'speed', 'FT', 'FToffset', ...
         'FToffsetRear','aviFrame', 'base_struct', 'sessions_included', 'auto_rotate_to_std');
     end
