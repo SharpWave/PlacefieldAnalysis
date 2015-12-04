@@ -84,9 +84,15 @@ if (nargin == 0)
     display('assuming room 201b');
     % factor for 201a is 0.0709
 else
-    if (strcmp(RoomStr,'201a'))
+    if (strcmpi(RoomStr,'201a'))
         Pix2Cm = 0.0709;
         display('Room 201a');
+    elseif strcmpi(RoomStr,'201b')
+        Pix2Cm = 0.15;
+        display('Room 201b');
+    elseif strcmpi(RoomStr,'201a - 2015')
+        Pix2Cm = 0.0874;
+        display('Room 201a - 2015');
     end
 end
 
