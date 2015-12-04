@@ -8,7 +8,7 @@ try
     x = xpos_interp;
     y = ypos_interp;
 catch
-    [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition('Video.DVT');
+    [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_auto('Video.DVT');
 end
 
 x = xpos_interp;
