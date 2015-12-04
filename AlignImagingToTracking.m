@@ -35,8 +35,8 @@ y = y(pStart:end);
 if exist('AVItime_interp','var')
     aviFrame = AVItime_interp(pStart:end);
 else
-    aviFrame = 'not found in Pos.mat';
-    disp('aviFrame not found in Pos.mat.  Skipping using for now')
+    aviFrame = 1:size(FT,2);
+    disp('aviFrame not found in Pos.mat.  Faking for now')
 end
 
 speed = speed(pStart:end);
