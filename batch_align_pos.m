@@ -46,6 +46,11 @@ function [ ] = batch_align_pos(base_struct, reg_struct, varargin)
 %       name_append: this will be appended to the Pos_align or
 %       Pos_align_std_corr if you specify it
 %
+%       circ2square_use: logical with 1 indicating to use circle data
+%       that has been transformed to square data (in Pos_trans.mat).  Will
+%       save all data in Pos_align_trans.mat or
+%       Pos_align_std_corr_trans.mat.
+%
 % OUTPUTS (saved in Pos_align.mat in working directory, or Pos_align_std_corr.mat
 %          if you choose to auto-rotate back):
 %
@@ -96,6 +101,10 @@ for j = 1:length(varargin)
    if strcmpi(varargin{j},'name_append')
       name_append = varargin{j+1}; 
    end
+   if strcmpi(varargin{j},'circ2square_use')
+      circ2square_use = varargin{j+1};
+      name_append = '_trans';
+   end
 end
 
 %% 1: Load all sessions, and align to imaging data
@@ -123,6 +132,11 @@ for j = 1: length(sesh)
     load('ProcOut.mat', 'FT')
     % Align tracking and imaging
     [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
+    
+    % Transform circle data if indicated AND if
+    if ~isempty(regexpi(MD(81).Env,'octagon')) && circ2square_use == 1
+       [ x, y ] = circ2square_full(sesh(j),Pix2Cm);
+    end
     
     % Auto-rotate back to standard configuration if indicated
     if auto_rotate_to_std == 1
