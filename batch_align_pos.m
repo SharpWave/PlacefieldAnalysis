@@ -134,7 +134,7 @@ for j = 1: length(sesh)
     [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
     
     % Transform circle data if indicated AND if
-    if ~isempty(regexpi(MD(81).Env,'octagon')) && circ2square_use == 1
+    if circ2square_use == 1 && ~isempty(regexpi(sesh(j).Env,'octagon')) 
        [ x, y ] = circ2square_full(sesh(j),Pix2Cm);
     end
     
