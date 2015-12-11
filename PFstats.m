@@ -1,23 +1,45 @@
-function [] = PFstats(rot_to_std)
+function [] = PFstats(rot_to_std, varargin)
 %PFstats(rot_to_std, varargin )
 %   Calculate statistics on place-fields
 %
 % INPUTS
 %
-%   rot_to_sta: 0(default) uses data that has either not been aligned with
+%   rot_to_std: 0(default) uses data that has either not been aligned with
 %   other data or not rotated such that local cues align, 1 - uses data
 %   that has been rotated such that local cues align
 %
+% varargins
+%   -'alt_file_use': use to load a Pos_align file that is not either
+%       Pos_align.mat or Pos_align_std_corr.mat. must follow
+%       'alt_file_use' with  the name of the file to
+%       load and the text you want to append onto the end of the PFstats
+%       output file
 
 if nargin == 0
     rot_to_std = 0;
 end
 
+alt_file = 0;
+name_append = '';
+for j = 1:length(varargin)
+    if strcmpi(varargin{j},'alt_file_use')
+        alt_file_use = varargin{j+1};
+        name_append = varargin{j+2};
+        if ~isempty(alt_file_use)
+            alt_file = 1;
+        end
+   end
+end
+
 % Load appropriate PlaceMaps file
-if rot_to_std == 0
-    load PlaceMaps.mat; % x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin;
-elseif rot_to_std == 1
-   load PlaceMaps_rot_to_std.mat; 
+if alt_file == 1
+    load(alt_file_use)
+elseif alt_file == 0
+    if rot_to_std == 0
+        load PlaceMaps.mat; % x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin;
+    elseif rot_to_std == 1
+        load PlaceMaps_rot_to_std.mat;
+    end
 end
 
 % Which pixels are in place field?
@@ -109,10 +131,13 @@ for i = 1:NumNeurons
 end
 
 if rot_to_std == 0
-    save PFstats.mat PFpcthits PFnumhits PFactive PFnumepochs PFepochs MaxPF PFcentroid PFsize PFpixels -v7.3;
+    save_name = ['PFstats' name_append '.mat'] ;
 elseif rot_to_std == 1
-    save PFstats_rot_to_std.mat PFpcthits PFnumhits PFactive PFnumepochs PFepochs MaxPF PFcentroid PFsize PFpixels -v7.3;
+    save_name = ['PFstats_rot_to_std' name_append '.mat'];
 end
+
+save(save_name, 'PFpcthits', 'PFnumhits', 'PFactive', 'PFnumepochs', 'PFepochs',...
+    'MaxPF', 'PFcentroid', 'PFsize', 'PFpixels', '-v7.3');
 
 end
 

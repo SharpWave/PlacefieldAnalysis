@@ -1,4 +1,4 @@
-function [] = CalculatePlacefields(RoomStr,varargin)
+function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 % [] = [] = CalculatePlacefields(RoomStr,varargin)
 % RoomStr, e.g. '201a'
 %       Takes tracking data from Pos.mat (or Pos_align.mat, see batch_pos_align)
@@ -32,17 +32,25 @@ function [] = CalculatePlacefields(RoomStr,varargin)
 %
 %       -'mispeed': threshold for calculating placemaps.  Any values below
 %           are not used. 1 cm/s = default.  
+%
+%       -'pos_align_file': use to load a Pos_align file that is not either
+%       Pos_align.mat or Pos_align_std_corr.mat. must follow
+%       'pos_align_file' with two arguments: 1) the name of the file to
+%       load, and 2) a name to append to the Placefields file that will be
+%       saved as output
 
 close all;
 
 progress_bar = 0;
 exclude_frames = [];
 rotate_to_std = 0;
-name_append = [];
+name_append = '';
+name_append2 = '';
 calc_half = 0;
 cmperbin = 1; % Dombeck uses 2.5 cm bins, Ziv uses 2x2 bins with 3.75 sigma gaussian smoothing
 use_mut_info = 0; % default
 minspeed = 1; % cm/s, default
+pos_align_file = '';
 for j = 1:length(varargin)
     if strcmpi('progress_bar',varargin{j})
         progress_bar = varargin{j+1};
@@ -68,7 +76,12 @@ for j = 1:length(varargin)
     if strcmpi(varargin{j},'minspeed')
         minspeed = varargin{j+1};
     end
+    if strcmpi(varargin{j},'pos_align_file')
+        pos_align_file = varargin{j+1};
+        name_append2 = varargin{j+2};
+    end
 end
+name_append = [name_append name_append2];
 
 load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT caltrain NumFrames
 
@@ -105,12 +118,17 @@ for i = 1:NumNeurons
 end
 
 try % Pull aligned data
-    if rotate_to_std == 0
-        load Pos_align.mat
-        disp('Using position data that has been aligned to other like sessions.')
-    elseif rotate_to_std == 1   
-        load Pos_align_std_corr.mat
-        disp('Using position data that has been aligned to other like sessions AND rotated so that local cues are aligned.')
+    if ~isempty(pos_align_file) % Load alternate file with aligned position data if specified
+        load(pos_align_file)
+        disp(['Using position data that has been aligned to other like sessions in file "' pos_align_file '"'])
+    elseif isempty(pos_align_file) % load either Pos_align or Pos_align_std_corr
+        if rotate_to_std == 0
+            load Pos_align.mat
+            disp('Using position data that has been aligned to other like sessions.')
+        elseif rotate_to_std == 1
+            load Pos_align_std_corr.mat
+            disp('Using position data that has been aligned to other like sessions AND rotated so that local cues are aligned.')
+        end
     end
     % Note that xmin, xmax, ymin, and ymax (used below) have been pulled from
     % Pos_align.mat.
@@ -301,6 +319,8 @@ save(save_name,'x', 'y', 't', 'xOutline', 'yOutline', 'speed','minspeed', ...
     'cmperbin', 'pval', 'Xbin', 'Ybin', 'FToffset', 'FToffsetRear', 'isrunning',...
     'Xedges', 'Yedges','exclude_frames','aviFrame','TMap_half','pval_half',...
     'pvalI','Pix2Cm','-v7.3'); 
+
+output_filename = save_name;
 
 return;
 
