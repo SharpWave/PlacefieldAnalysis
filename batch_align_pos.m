@@ -133,16 +133,17 @@ for j = 1: length(sesh)
     % Align tracking and imaging
     [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
     
-    % Transform circle data if indicated AND if
-    if circ2square_use == 1 && ~isempty(regexpi(sesh(j).Env,'octagon')) 
-       [ x, y ] = circ2square_full(sesh(j),Pix2Cm);
-    end
+%     % Transform circle data if indicated AND if in the square
+%     if circ2square_use == 1 && ~isempty(regexpi(sesh(j).Env,'octagon')) 
+%        [ x, y ] = circ2square_full(sesh(j),Pix2Cm);
+%     end
     
     % Auto-rotate back to standard configuration if indicated
     if auto_rotate_to_std == 1
         rot_corr = get_rot_from_db(sesh(j));
         [x, y] = rotate_arena(x,y,rot_corr);
     end
+    
     sesh(j).x = x;
     sesh(j).y = y;
     sesh(j).FT = FT;
@@ -177,6 +178,21 @@ for j = 1:length(sesh)
         [x_for_limits, y_for_limits, sesh(j).ind_keep] = draw_manual_limits(...
             sesh(j).rot_x, sesh(j).rot_y);
     end
+    
+    % Transform circle to square if indicated
+    if circ2square_use == 1 && ~isempty(regexpi(sesh(j).Env,'octagon')) 
+        %Arena Size Parameters
+        circle_radius = 14.33;
+        square_side = 25.4;
+        [x_for_limits, y_for_limits] = circ2square(x_for_limits, ...
+            y_for_limits, square_side, circle_radius );
+        sesh(j).rot_x = nan(size(sesh(j).rot_x));
+        sesh(j).rot_y = nan(size(sesh(j).rot_y));
+        sesh(j).rot_x(sesh(j).ind_keep) = x_for_limits; 
+        sesh(j).rot_y(sesh(j).ind_keep) = y_for_limits;
+    end
+    
+    
     % Get ecdfs of all x and y points
     [sesh(j).e_fx, sesh(j).e_x] = ecdf(x_for_limits);
     [sesh(j).e_fy, sesh(j).e_y] = ecdf(y_for_limits);
