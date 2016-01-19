@@ -20,6 +20,10 @@ function [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_
 %   suggest it because it tends to cause weird crashes when MATLAB can't
 %   figure out which figure it should actually be plotting to.
 %
+%   'epoch_length_lim': will not auto-correct any epochs over this length
+%   where the mouse is at 0,0 or above the velocity threhold - suggest
+%   using if the mouse is off the maze for a long time.
+%
 %   OUTPUTS (all saved in Pos.mat, along with some others)
 %   xpos_interp, ypos_interp: smoothed, corrected position data
 %   interpolated to match the frame rate of the imaging data (hardcoded at
@@ -34,10 +38,15 @@ close all;
 %% Get varargin
 
 update_pos_realtime = 0; % Default setting
+epoch_length_lim = [];
 for j = 1:length(varargin)
    if strcmpi('update_pos_realtime', varargin{j})
       update_pos_realtime = varargin{j+1};
    end
+   if strcmpi('epoch_length_lim', varargin{j})
+      epoch_length_lim = varargin{j+1};
+   end
+   
 end
 
 %%
@@ -134,6 +143,14 @@ if sum(auto_frames) > 0
     [ on, off ] = get_on_off( auto_frames );
     [ epoch_start, epoch_end ] = cluster_epochs( on, off, cluster_thresh );
     n_epochs = length(epoch_start);
+    
+    % Apply epoch length limits if applicable
+    if ~isempty(epoch_length_lim)
+       epoch_lengths = epoch_end - epoch_start;
+       epoch_start = epoch_start(epoch_lengths < epoch_length_lim);
+       epoch_end = epoch_end(epoch_lengths < epoch_length_lim);
+       n_epochs = length(epoch_start);
+    end
 elseif sum(auto_frames) == 0
     auto_thresh_flag = 0;
 end
