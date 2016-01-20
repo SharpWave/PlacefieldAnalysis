@@ -132,13 +132,14 @@ if exist('auto_thresh','var')
     auto_vel_thresh = min(xv(fv > (1-auto_thresh)));
 else
     auto_vel_thresh = max(vel_init)+1;
+    auto_thresh = nan; % Don't perform any autocorrection if not specified
 end
 
 % start auto-correction of anything above threshold
 auto_frames = (Xpix == 0 | Ypix == 0 | vel_init > auto_vel_thresh) & time > MoMtime;
 
 % Determine if auto thresholding applies
-if sum(auto_frames) > 0
+if sum(auto_frames) > 0 && ~isnan(auto_thresh)
     auto_thresh_flag = 1;
     [ on, off ] = get_on_off( auto_frames );
     [ epoch_start, epoch_end ] = cluster_epochs( on, off, cluster_thresh );
@@ -171,7 +172,7 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
   hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
   subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');
   hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
-  if auto_thresh_flag == 0
+  if auto_thresh_flag == 0 || isempty(epoch_start)
       MorePoints = input('Is there a flaw that needs to be corrected?  [y/n] -->','s');
   else
       MorePoints = 'y'; pause(1)
@@ -179,7 +180,7 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
 
   
   if (strcmp(MorePoints,'n') ~= 1 && strcmp(MorePoints,'g') ~= 1)
-      if auto_thresh_flag == 0
+      if auto_thresh_flag == 0 || isempty(epoch_start)
           FrameSelOK = 0;
           while (FrameSelOK == 0)
               display('click on the good points around the flaw then hit enter');
