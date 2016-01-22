@@ -159,19 +159,24 @@ end
 % keyboard
 
 figure(555);
-subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');axis tight;
-subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');axis tight;
+hx0 = subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');axis tight;
+hy0 = subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');axis tight;
+linkaxes([hx0 hy0],'x');
 
 v0 = readFrame(obj);
 MorePoints = 'y';
 length(time)
 
-n = 1;
+n = 1; first_time = 1;
 while (strcmp(MorePoints,'y')) || isempty(MorePoints)
-  subplot(4,3,1:3); plot(time,Xpix); xlabel('time (sec)'); ylabel('x position (cm)');
-  hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
-  subplot(4,3,4:6); plot(time,Ypix); xlabel('time (sec)'); ylabel('y position (cm)');
-  hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
+%     if first_time == 1
+%         hx0 = subplot(4,3,1:3); plot(time,Xpix); xlabel('time (sec)'); ylabel('x position (cm)');
+%         hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
+%         hy0 = subplot(4,3,4:6); plot(time,Ypix); xlabel('time (sec)'); ylabel('y position (cm)');
+%         hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
+%         first_time = 0;
+%         linkaxes([hx0 hy0],'x');
+%     end
   if auto_thresh_flag == 0 || isempty(epoch_start)
       MorePoints = input('Is there a flaw that needs to be corrected?  [y/n] -->','s');
   else
@@ -293,6 +298,8 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
     vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)/(time(2)-time(1));
     vel = [vel; vel(end)]; % Make the vectors the same size
     plot(time(MouseOnMazeFrame:end),vel(MouseOnMazeFrame:end));
+    hold on
+    plot(time(eFrame),vel(eFrame),'g*')
     if auto_thresh_flag == 1
         % Get indices for all remaining times that fall above the auto 
         % threshold that have not been corrected
@@ -305,13 +312,15 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
     xlim_use = get(gca,'XLim'); hv = gca;
     
     % plot updated x and y values
-    subplot(4,3,1:3); plot(time,Xpix);xlabel('time (sec)'); ylabel('x position (cm)');
+    hx = subplot(4,3,1:3); plot(time,Xpix); hold on; plot(time(eFrame),Xpix(eFrame),'g*')
+    xlabel('time (sec)'); ylabel('x position (cm)');
     hold on; yl = get(gca,'YLim'); line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
-    hold off; axis tight; set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hx = gca;
+    hold off; axis tight; % set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hx = gca;
     
-    subplot(4,3,4:6); plot(time,Ypix); xlabel('time (sec)'); ylabel('y position (cm)');
+    hy = subplot(4,3,4:6); plot(time,Ypix); hold on; plot(time(eFrame),Ypix(eFrame),'g*')
+    xlabel('time (sec)'); ylabel('y position (cm)');
     hold on; yl = get(gca,'YLim'); line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
-    hold off; axis tight; set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hy = gca;
+    hold off; axis tight; % set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hy = gca;
     
     linkaxes([hx, hy, hv],'x'); % Link axes zooms along time dimension together
     
