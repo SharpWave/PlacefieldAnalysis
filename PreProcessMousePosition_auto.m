@@ -168,9 +168,9 @@ length(time)
 
 n = 1;
 while (strcmp(MorePoints,'y')) || isempty(MorePoints)
-  subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');
+  subplot(4,3,1:3); plot(time,Xpix); xlabel('time (sec)'); ylabel('x position (cm)');
   hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
-  subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');
+  subplot(4,3,4:6); plot(time,Ypix); xlabel('time (sec)'); ylabel('y position (cm)');
   hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');hold off;axis tight;
   if auto_thresh_flag == 0 || isempty(epoch_start)
       MorePoints = input('Is there a flaw that needs to be corrected?  [y/n] -->','s');
@@ -302,15 +302,18 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
         hold off
     end
     hold off;axis tight;xlabel('time (sec)');ylabel('velocity (units/sec)');
-    xlim_use = get(gca,'XLim');
+    xlim_use = get(gca,'XLim'); hv = gca;
     
     % plot updated x and y values
-    subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');
-    hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
-    hold off;axis tight;set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]);
-    subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');
-    hold on;yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
-    hold off;axis tight;set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]);
+    subplot(4,3,1:3); plot(time,Xpix);xlabel('time (sec)'); ylabel('x position (cm)');
+    hold on; yl = get(gca,'YLim'); line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
+    hold off; axis tight; set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hx = gca;
+    
+    subplot(4,3,4:6); plot(time,Ypix); xlabel('time (sec)'); ylabel('y position (cm)');
+    hold on; yl = get(gca,'YLim'); line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
+    hold off; axis tight; set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hy = gca;
+    
+    linkaxes([hx, hy, hv],'x'); % Link axes zooms along time dimension together
     
     drawnow % Make sure everything gets updated properly!
     
