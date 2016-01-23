@@ -43,6 +43,14 @@ function [ ] = batch_align_pos(base_struct, reg_struct, varargin)
 %       manually draw limits for the 1st and 3rd registered sessions but
 %       not the base session or 2nd registered session)
 %
+%       name_append: this will be appended to the Pos_align or
+%       Pos_align_std_corr if you specify it
+%
+%       circ2square_use: logical with 1 indicating to use circle data
+%       that has been transformed to square data (in Pos_trans.mat).  Will
+%       save all data in Pos_align_trans.mat or
+%       Pos_align_std_corr_trans.mat.
+%
 % OUTPUTS (saved in Pos_align.mat in working directory, or Pos_align_std_corr.mat
 %          if you choose to auto-rotate back):
 %
@@ -76,6 +84,7 @@ ymin = 20; % where you want to set the minimum y-value
 
 %% 0: Get varargins
 
+name_append = ''; % default
 for j = 1:length(varargin)
    if strcmpi(varargin{j},'manual_rot_overwrite')
        manual_rot_overwrite = varargin{j+1};
@@ -89,6 +98,13 @@ for j = 1:length(varargin)
    if strcmpi(varargin{j},'manual_limits')
       manual_limits = varargin{j+1}; 
    end
+   if strcmpi(varargin{j},'name_append')
+      name_append = varargin{j+1}; 
+   end
+   if strcmpi(varargin{j},'circ2square_use')
+      circ2square_use = varargin{j+1};
+      name_append = '_trans';
+   end
 end
 
 %% 1: Load all sessions, and align to imaging data
@@ -100,9 +116,15 @@ sesh(2:length(reg_struct) + 1) = reg_struct;
 currdir = cd;
 for j = 1: length(sesh)
     ChangeDirectory(sesh(j).Animal, sesh(j).Date ,sesh(j).Session);
-    if ~isempty(regexpi(sesh(1).Room,'201b'))
+    if ~isempty(regexpi(sesh(j).Room,'201b'))
         Pix2Cm = 0.15;
         disp(['Using 0.15 for Pix2Cm for ' sesh(j).Date ' Session ' num2str(sesh(j).Session)])
+    elseif ~isempty(regexpi(sesh(j).Room,'201a - 2015'))
+        Pix2Cm = 0.0874;
+        disp(['Using 0.0875 for Pix2Cm for ' sesh(j).Date ' Session ' num2str(sesh(j).Session)])
+    elseif ~isempty(regexpi(sesh(j).Room,'201a'))
+        Pix2Cm = 0.0709;
+        disp(['Using 0.0709 for Pix2Cm for ' sesh(j).Date ' Session ' num2str(sesh(j).Session)])    
     else
         Pix2Cm = [];
         disp('Need room to get Pix2Cm')
@@ -111,11 +133,17 @@ for j = 1: length(sesh)
     % Align tracking and imaging
     [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
     
+%     % Transform circle data if indicated AND if in the square
+%     if circ2square_use == 1 && ~isempty(regexpi(sesh(j).Env,'octagon')) 
+%        [ x, y ] = circ2square_full(sesh(j),Pix2Cm);
+%     end
+    
     % Auto-rotate back to standard configuration if indicated
     if auto_rotate_to_std == 1
         rot_corr = get_rot_from_db(sesh(j));
         [x, y] = rotate_arena(x,y,rot_corr);
     end
+    
     sesh(j).x = x;
     sesh(j).y = y;
     sesh(j).FT = FT;
@@ -150,6 +178,21 @@ for j = 1:length(sesh)
         [x_for_limits, y_for_limits, sesh(j).ind_keep] = draw_manual_limits(...
             sesh(j).rot_x, sesh(j).rot_y);
     end
+    
+    % Transform circle to square if indicated
+    if circ2square_use == 1 && ~isempty(regexpi(sesh(j).Env,'octagon')) 
+        %Arena Size Parameters
+        circle_radius = 14.33;
+        square_side = 25.4;
+        [x_for_limits, y_for_limits] = circ2square(x_for_limits, ...
+            y_for_limits, square_side, circle_radius );
+        sesh(j).rot_x = nan(size(sesh(j).rot_x));
+        sesh(j).rot_y = nan(size(sesh(j).rot_y));
+        sesh(j).rot_x(sesh(j).ind_keep) = x_for_limits; 
+        sesh(j).rot_y(sesh(j).ind_keep) = y_for_limits;
+    end
+    
+    
     % Get ecdfs of all x and y points
     [sesh(j).e_fx, sesh(j).e_x] = ecdf(x_for_limits);
     [sesh(j).e_fy, sesh(j).e_y] = ecdf(y_for_limits);
@@ -206,12 +249,12 @@ for j = 1:length(sesh)
     FToffsetRear = sesh(j).FToffsetRear;
     aviFrame = sesh(j).aviFrame;
     if auto_rotate_to_std == 0
-    save(fullfile(sesh(j).Location,'\Pos_align.mat'),'x_adj_cm','y_adj_cm',...
+    save(fullfile(sesh(j).Location,['Pos_align' name_append '.mat']),'x_adj_cm','y_adj_cm',...
         'xmin','xmax','ymin','ymax', 'speed', 'FT', 'FToffset', ...
         'FToffsetRear', 'aviFrame', 'base_struct','sessions_included','auto_rotate_to_std');
     elseif auto_rotate_to_std == 1
         % finish here - save as a different filename?
-        save(fullfile(sesh(j).Location,'\Pos_align_std_corr.mat'),'x_adj_cm','y_adj_cm',...
+        save(fullfile(sesh(j).Location,['Pos_align_std_corr' name_append '.mat']),'x_adj_cm','y_adj_cm',...
         'xmin','xmax','ymin','ymax', 'speed', 'FT', 'FToffset', ...
         'FToffsetRear','aviFrame', 'base_struct', 'sessions_included', 'auto_rotate_to_std');
     end

@@ -56,7 +56,7 @@ TMap2 = TMap; % Save copy for gaussian smoothing
 Tsum = sum(TMap(:));
 
 % Filter specifications
-sm_gauss = fspecial('gaussian',[8*gauss_std, 8*gauss_std],gauss_std);
+sm_gauss = fspecial('gaussian',[round(8*gauss_std,0), round(8*gauss_std,0)],gauss_std);
 sm = fspecial('disk',disk_rad);
 
 %%%  FOR REFERENCE %%%
