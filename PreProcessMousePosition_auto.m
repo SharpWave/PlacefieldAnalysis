@@ -197,6 +197,9 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
     v = readFrame(obj);
     
     framesToCorrect = sFrame:eFrame;
+    if eFrame >= max(time)
+        framesToCorrect = sFrame:eFrame-2; % Fix case where last frame needs to be corrected
+    end
     frame_use_index = 1:floor(length(framesToCorrect)/2);
     frame_use_num = length(frame_use_index);
     
