@@ -299,7 +299,7 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
     vel = [vel; vel(end)]; % Make the vectors the same size
     plot(time(MouseOnMazeFrame:end),vel(MouseOnMazeFrame:end));
     hold on
-    plot(time(eFrame),vel(eFrame),'g*')
+    plot(time([sFrame eFrame]),vel([sFrame eFrame]),'ro'); % plot start and end points of last edit
     if auto_thresh_flag == 1
         % Get indices for all remaining times that fall above the auto 
         % threshold that have not been corrected
@@ -312,12 +312,14 @@ while (strcmp(MorePoints,'y')) || isempty(MorePoints)
     xlim_use = get(gca,'XLim'); hv = gca;
     
     % plot updated x and y values
-    hx = subplot(4,3,1:3); plot(time,Xpix); hold on; plot(time(eFrame),Xpix(eFrame),'g*')
+    hx = subplot(4,3,1:3); plot(time,Xpix); hold on; 
+    plot(time([sFrame eFrame]),Xpix([sFrame eFrame]),'ro'); % plot start and end points of last edit
     xlabel('time (sec)'); ylabel('x position (cm)');
     hold on; yl = get(gca,'YLim'); line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
     hold off; axis tight; % set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hx = gca;
     
-    hy = subplot(4,3,4:6); plot(time,Ypix); hold on; plot(time(eFrame),Ypix(eFrame),'g*')
+    hy = subplot(4,3,4:6); plot(time,Ypix); hold on; 
+    plot(time([sFrame eFrame]),Ypix([sFrame eFrame]),'ro'); % plot start and end points of last edit
     xlabel('time (sec)'); ylabel('y position (cm)');
     hold on; yl = get(gca,'YLim'); line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
     hold off; axis tight; % set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hy = gca;
