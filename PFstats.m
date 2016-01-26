@@ -20,6 +20,7 @@ if nargin == 0
 end
 
 alt_file = 0;
+progress_bar = 1; % default
 name_append = '';
 for j = 1:length(varargin)
     if strcmpi(varargin{j},'alt_file_use')
@@ -27,6 +28,9 @@ for j = 1:length(varargin)
         name_append = varargin{j+2};
         if ~isempty(alt_file_use)
             alt_file = 1;
+        end
+        if strcmpi('progress_bar',varargin{j})
+            progress_bar = varargin{j+1};
         end
    end
 end
@@ -52,7 +56,10 @@ NumNeurons = length(NeuronImage);
 NumFrames = length(Xbin);
 
 % some analysis using bwconncomp and regionprops
-
+disp('Calculating PF centers for all neurons')
+if progress_bar == 1
+    p = ProgressBar(NumNeurons);
+end
 for i = 1:NumNeurons
     display(['calculating PF center for neuron ',int2str(i)]);
     peakval = max(TMap{i}(:));
@@ -60,10 +67,18 @@ for i = 1:NumNeurons
     BoolMap = ThreshMap > 0;
     b{i} = bwconncomp(BoolMap);
     r{i} = regionprops(b{i},'area','centroid');
+    if progress_bar == 1
+        p.progress;
+    end
+end
+if progress_bar == 1
+    p.stop;
 end
 
-
-
+disp('repackaging PF info for all neurons')
+if progress_bar == 1
+    p = ProgressBar(NumNeurons);
+end
 for i = 1:NumNeurons
     display(['repackaging PF info for neuron ',int2str(i)])
     NumPF(i) = b{i}.NumObjects;
@@ -82,6 +97,12 @@ for i = 1:NumNeurons
     % that the cell only fires in once, but another, smaller field that the
     % cell fires reliably and on numerous passes, wouldn't it be good to
     % know that also?
+    if progress_bar == 1
+        p.progress;
+    end
+end
+if progress_bar == 1
+    p.stop;
 end
 
 % for every place field, figure out how many times the mouse passed through
@@ -89,6 +110,11 @@ end
 
 % convert Xbin and Ybin into a single number denoting where the mouse is
 loc_index = sub2ind(size(TMap{1}),Xbin,Ybin);
+
+disp('Calculating PF visits for all neurons')
+if progress_bar == 1
+    p = ProgressBar(NumNeurons);
+end
 for i = 1:NumNeurons
     display(['calculating PF visits for neuron ',int2str(i)])
     PFnumepochs(i,1) = 0;
@@ -111,8 +137,18 @@ for i = 1:NumNeurons
         PFepochs{i,j} = NP_FindSupraThresholdEpochs(PixelBool,eps,0);
         PFnumepochs(i,j) = size(PFepochs{i,j},1);
     end
+    if progress_bar == 1
+        p.progress;
+    end
+end
+if progress_bar == 1
+    p.stop;
 end
 
+disp('Calculating PF hits for all neurons')
+if progress_bar == 1
+    p = ProgressBar(NumNeurons);
+end
 for i = 1:NumNeurons
     display(['calculating PF hits for neuron ',int2str(i)])
 
@@ -128,6 +164,12 @@ for i = 1:NumNeurons
             PFpcthits(i,j) = PFnumhits(i,j)/PFnumepochs(i,j);
         end
     end
+    if progress_bar == 1
+        p.progress;
+    end
+end
+if progress_bar == 1
+    p.end;
 end
 
 if rot_to_std == 0
