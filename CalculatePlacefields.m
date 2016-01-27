@@ -29,6 +29,8 @@ function [] = CalculatePlacefields(RoomStr,varargin)
 %
 %       -'calc_half': 0 = default. 1 = calculate TMap and pvalues for 1st
 %       and 2nd half of session along with whole session maps
+%       
+%       -'man_savename': use specified savename. 
 
 close all;
 
@@ -38,9 +40,14 @@ rotate_to_std = 0;
 name_append = [];
 calc_half = 0;
 cmperbin = 1; % Dombeck uses 2.5 cm bins, Ziv uses 2x2 bins with 3.75 sigma gaussian smoothing
+man_savename = [];
+
 for j = 1:length(varargin)
     if strcmpi('progress_bar',varargin{j})
         progress_bar = varargin{j+1};
+    end
+    if strcmpi('man_savename',varargin{j})
+        man_savename = varargin{j+1};
     end
     if strcmpi('exclude_frames',varargin{j})
         exclude_frames = varargin{j+1};
@@ -272,10 +279,14 @@ p.stop;
 
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
-if rotate_to_std == 0
-    save_name = ['PlaceMaps' name_append '.mat'] ;
-elseif rotate_to_std == 1
-    save_name = ['PlaceMaps_rot_to_std' name_append '.mat'];
+if (~isempty(man_savename))
+    if rotate_to_std == 0
+        save_name = ['PlaceMaps' name_append '.mat'] ;
+    elseif rotate_to_std == 1
+        save_name = ['PlaceMaps_rot_to_std' name_append '.mat'];
+    end
+else
+    save_name = man_savename;
 end
 
 %%% NRK - save 1st and 2nd half stuff here
