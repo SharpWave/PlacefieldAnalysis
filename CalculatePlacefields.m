@@ -41,6 +41,7 @@ name_append = [];
 calc_half = 0;
 cmperbin = 1; % Dombeck uses 2.5 cm bins, Ziv uses 2x2 bins with 3.75 sigma gaussian smoothing
 man_savename = [];
+alt_inputs = [];
 
 for j = 1:length(varargin)
     if strcmpi('progress_bar',varargin{j})
@@ -48,6 +49,9 @@ for j = 1:length(varargin)
     end
     if strcmpi('man_savename',varargin{j})
         man_savename = varargin{j+1};
+    end
+    if strcmpi('alt_inputs',varargin{j})
+        alt_inputs = varargin{j+1};
     end
     if strcmpi('exclude_frames',varargin{j})
         exclude_frames = varargin{j+1};
@@ -67,7 +71,11 @@ for j = 1:length(varargin)
     
 end
 
-load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT caltrain NumFrames
+if (~isempty(alt_inputs))
+    load(alt_inputs);
+else
+    load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT NumFrames
+end
 
 minspeed = 1;
 SR = 20;
