@@ -72,10 +72,12 @@ for j = 1:length(varargin)
 end
 
 if (~isempty(alt_inputs))
-    load(alt_inputs);
+    load(alt_inputs,'NeuronImage','NeuronPixels','FT');
 else
-    load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT NumFrames
+    load ('ProcOut.mat','NeuronImage','NeuronPixels','FT');
 end
+
+NumNeurons = size(FT,1);
 
 minspeed = 1;
 SR = 20;
@@ -95,8 +97,6 @@ else
         display('Room 201a');
     end
 end
-
-NumNeurons = length(NeuronImage);
 
 for i = 1:NumNeurons
     temp = bwboundaries(NeuronImage{i});
