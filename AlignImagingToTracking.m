@@ -8,7 +8,8 @@ try
     x = xpos_interp;
     y = ypos_interp;
 catch
-    [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_auto('Video.DVT');
+    vidFile = dir('*.DVT');
+    [xpos_interp,ypos_interp,start_time,MoMtime,time_interp,AVItime_interp] = PreProcessMousePosition_auto(vidFile.name);
 end
 
 x = xpos_interp;

@@ -1,4 +1,4 @@
-function [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_auto(filepath, auto_thresh,varargin)
+function [xpos_interp,ypos_interp,start_time,MoMtime,time_interp,AVItime_interp] = PreProcessMousePosition_auto(filepath, auto_thresh,varargin)
 % [xpos_interp,ypos_interp,start_time,MoMtime] = PreProcessMousePosition_auto(filepath, auto_thresh,...)
 % Function to correct errors in mouse tracking.  Runs once through the
 % entire sessions automatically having you edit any events above a velocity
@@ -146,7 +146,7 @@ subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');
 
 v0 = readFrame(obj);
 MorePoints = 'y';
-length(time)
+length(time);
 
 n = 1;
 while (strcmp(MorePoints,'y')) || isempty(MorePoints)
