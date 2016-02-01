@@ -333,7 +333,7 @@ p.stop;
 
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
-if (~isempty(man_savename))
+if isempty(man_savename)
     if rotate_to_std == 0
         save_name = ['PlaceMaps' name_append '.mat'] ;
     elseif rotate_to_std == 1
