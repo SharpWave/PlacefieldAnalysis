@@ -1,4 +1,4 @@
-function [] = CalculatePlacefields(RoomStr,varargin)
+function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 % [] = [] = CalculatePlacefields(RoomStr,varargin)
 % RoomStr, e.g. '201a'
 %       Takes tracking data from Pos.mat (or Pos_align.mat, see batch_pos_align)
@@ -13,8 +13,16 @@ function [] = CalculatePlacefields(RoomStr,varargin)
 %       while running StrapIt (needs ProgressBar function written by Stefan
 %       Doerr)
 %
-%       -'exclude_frames': 1 x n array of frames you wish to exclude from
-%       PFA analysis
+%       -'exclude_frames': 1 x n array of frame numbers you wish to exclude from
+%       PFA analysis. IMPORTANT - these frames correspond to position/FT
+%       data that has already been aligned by running
+%       AlignImagingToTracking.
+%
+%       -'exclude_frames_raw: same as exclude_frames but using indices from
+%       raw FT data out of ProcOut.mat that has NOT been aligned to
+%       position data (e.g. bad/dropped frames identified in Mosaic).  Can
+%       be used in conjunction with 'exclude_frames' if you have both types
+%       of frames you wish to exclude
 %
 %       -'rotate_to_std': 1 =  use position data that has been rotated back
 %       such that all local cues are aligned (found in Pos_align_corr_std.mat). 
@@ -29,21 +37,44 @@ function [] = CalculatePlacefields(RoomStr,varargin)
 %
 %       -'calc_half': 0 = default. 1 = calculate TMap and pvalues for 1st
 %       and 2nd half of session along with whole session maps
-
+%
+%       -'mispeed': threshold for calculating placemaps.  Any values below
+%           are not used. 1 cm/s = default.  
+%
+%       -'pos_align_file': use to load a Pos_align file that is not either
+%       Pos_align.mat or Pos_align_std_corr.mat. must follow
+%       'pos_align_file' with two arguments: 1) the name of the file to
+%       load, and 2) a name to append to the Placefields file that will be
+%       saved as output
+%       
+%       -'man_savename': use specified savename. 
 close all;
 
 progress_bar = 0;
 exclude_frames = [];
+exclude_frames_raw = [];
 rotate_to_std = 0;
-name_append = [];
+name_append = '';
+name_append2 = '';
 calc_half = 0;
 cmperbin = 1; % Dombeck uses 2.5 cm bins, Ziv uses 2x2 bins with 3.75 sigma gaussian smoothing
+use_mut_info = 0; % default
+minspeed = 1; % cm/s, default
+pos_align_file = '';
+man_savename = [];
+
 for j = 1:length(varargin)
     if strcmpi('progress_bar',varargin{j})
         progress_bar = varargin{j+1};
     end
+    if strcmpi('man_savename',varargin{j})
+        man_savename = varargin{j+1};
+    end
     if strcmpi('exclude_frames',varargin{j})
         exclude_frames = varargin{j+1};
+    end
+    if strcmpi('exclude_frames_raw',varargin{j})
+        exclude_frames_raw = varargin{j+1};
     end
     if strcmpi('rotate_to_std',varargin{j})
         rotate_to_std = varargin{j+1};
@@ -57,12 +88,22 @@ for j = 1:length(varargin)
     if strcmpi('calc_half',varargin{j})
        calc_half = varargin{j+1};
     end
-    
+    if strcmpi(varargin{j},'use_mut_info')
+        use_mut_info = varargin{j+1};
+    end
+    if strcmpi(varargin{j},'minspeed')
+        minspeed = varargin{j+1};
+    end
+    if strcmpi(varargin{j},'pos_align_file')
+        pos_align_file = varargin{j+1};
+        name_append2 = varargin{j+2};
+    end
 end
+name_append = [name_append name_append2];
 
+%%
 load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT caltrain NumFrames
 
-minspeed = 1;
 SR = 20;
 Pix2Cm = 0.15;
 
@@ -75,9 +116,15 @@ if (nargin == 0)
     display('assuming room 201b');
     % factor for 201a is 0.0709
 else
-    if (strcmp(RoomStr,'201a'))
+    if (strcmpi(RoomStr,'201a'))
         Pix2Cm = 0.0709;
         display('Room 201a');
+    elseif strcmpi(RoomStr,'201b')
+        Pix2Cm = 0.15;
+        display('Room 201b');
+    elseif strcmpi(RoomStr,'201a - 2015')
+        Pix2Cm = 0.0874;
+        display('Room 201a - 2015');
     end
 end
 
@@ -90,12 +137,17 @@ for i = 1:NumNeurons
 end
 
 try % Pull aligned data
-    if rotate_to_std == 0
-        load Pos_align.mat
-        disp('Using position data that has been aligned to other like sessions.')
-    elseif rotate_to_std == 1   
-        load Pos_align_std_corr.mat
-        disp('Using position data that has been aligned to other like sessions AND rotated so that local cues are aligned.')
+    if ~isempty(pos_align_file) % Load alternate file with aligned position data if specified
+        load(pos_align_file)
+        disp(['Using position data that has been aligned to other like sessions in file "' pos_align_file '"'])
+    elseif isempty(pos_align_file) % load either Pos_align or Pos_align_std_corr
+        if rotate_to_std == 0
+            load Pos_align.mat
+            disp('Using position data that has been aligned to other like sessions.')
+        elseif rotate_to_std == 1
+            load Pos_align_std_corr.mat
+            disp('Using position data that has been aligned to other like sessions AND rotated so that local cues are aligned.')
+        end
     end
     % Note that xmin, xmax, ymin, and ymax (used below) have been pulled from
     % Pos_align.mat.
@@ -111,7 +163,7 @@ try % Pull aligned data
 catch % If no alignment has been performed, alert the user
     disp('Using position data that has NOT been aligned to other like sessions.')
     disp('NOT good for comparisons across sessions...run batch_align_pos for this.')
-    keyboard
+%     keyboard
     [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
     xmax = max(x); xmin = min(x);
     ymax = max(y); ymin = min(y);
@@ -119,6 +171,15 @@ catch % If no alignment has been performed, alert the user
 end
 
 Flength = length(x);
+
+%% Adjust exclude_frames_raw if applicable
+
+if ~isempty(exclude_frames_raw)
+    % take raw/non-aligned frame inidices that aligned with FT from
+    % ProcOut.mat file and align to aligned position/FT data.
+    exclude_frames = [exclude_frames exclude_frames_raw - (FToffset) + 2]; % concatenate to exclude_frames 
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -250,14 +311,14 @@ p = ProgressBar(NumNeurons);
 for i = 1:NumNeurons
   [TMap{i}, TMap_gauss{i}, TMap_unsmoothed{i}] = calcmapdec(FT(i,:), ...
       RunOccMap, Xbin, Ybin, isrunning & frames_use_ind, cmperbin);
-  pval(i) = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind,...
-      0, 'suppress_output', progress_bar);
+  [pval(i), pvalI(i)] = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind,...
+      0, 'suppress_output', progress_bar,'use_mut_info',use_mut_info);
   if calc_half == 1 % Calculate half-session TMaps and p-values
       for j = 1:2
           [TMap_half(j).Tmap{i}, TMap_half(j).TMap_gauss{i}, TMap_half(j).TMap_unsmoothed{i}] = ...
               calcmapdec(FT(i,:), RunOccMap, Xbin, Ybin, isrunning & frames_use_ind_half{j}, cmperbin);
-          pval_half{j}.pval(i) = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind_half{j},...
-              0, 'suppress_output', progress_bar);
+          [pval_half{j}.pval(i), pval_half{j}.pvalI(i)] = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind_half{j},...
+              0, 'suppress_output', progress_bar,'use_mut_info',use_mut_info);
       end
   else
       TMap_half = [];
@@ -272,10 +333,14 @@ p.stop;
 
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
-if rotate_to_std == 0
-    save_name = ['PlaceMaps' name_append '.mat'] ;
-elseif rotate_to_std == 1
-    save_name = ['PlaceMaps_rot_to_std' name_append '.mat'];
+if isempty(man_savename)
+    if rotate_to_std == 0
+        save_name = ['PlaceMaps' name_append '.mat'] ;
+    elseif rotate_to_std == 1
+        save_name = ['PlaceMaps_rot_to_std' name_append '.mat'];
+    end
+else
+    save_name = man_savename;
 end
 
 %%% NRK - save 1st and 2nd half stuff here
@@ -284,7 +349,10 @@ save(save_name,'x', 'y', 't', 'xOutline', 'yOutline', 'speed','minspeed', ...
     'FT', 'TMap','TMap_gauss', 'TMap_unsmoothed', 'RunOccMap', 'OccMap', ...
     'SpeedMap', 'RunSpeedMap', 'NeuronImage', 'NeuronPixels',...
     'cmperbin', 'pval', 'Xbin', 'Ybin', 'FToffset', 'FToffsetRear', 'isrunning',...
-    'Xedges', 'Yedges','exclude_frames','aviFrame','TMap_half','pval_half','-v7.3'); 
+    'Xedges', 'Yedges','exclude_frames','aviFrame','TMap_half','pval_half',...
+    'pvalI','Pix2Cm','-v7.3'); 
+
+output_filename = save_name;
 
 return;
 
