@@ -152,7 +152,7 @@ if sum(auto_frames) > 0 && ~isnan(auto_thresh)
        epoch_end = epoch_end(epoch_lengths < epoch_length_lim);
        n_epochs = length(epoch_start);
     end
-elseif sum(auto_frames) == 0
+else %if sum(auto_frames) == 0
     auto_thresh_flag = 0;
 end
 
