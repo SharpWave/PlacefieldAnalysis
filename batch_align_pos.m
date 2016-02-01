@@ -85,6 +85,7 @@ ymin = 20; % where you want to set the minimum y-value
 %% 0: Get varargins
 
 name_append = ''; % default
+circ2square_use = 0; % default
 for j = 1:length(varargin)
    if strcmpi(varargin{j},'manual_rot_overwrite')
        manual_rot_overwrite = varargin{j+1};
@@ -97,6 +98,10 @@ for j = 1:length(varargin)
    end
    if strcmpi(varargin{j},'manual_limits')
       manual_limits = varargin{j+1}; 
+      % Make the same length as all the reg_struct sessions + 1
+      if length(manual_limits) ~= (length(reg_struct) + 1)
+          manual_limits(1:(length(reg_struct) + 1)) = manual_limits;
+      end
    end
    if strcmpi(varargin{j},'name_append')
       name_append = varargin{j+1}; 
