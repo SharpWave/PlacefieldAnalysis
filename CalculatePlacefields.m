@@ -46,7 +46,8 @@ function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 %       'pos_align_file' with two arguments: 1) the name of the file to
 %       load, and 2) a name to append to the Placefields file that will be
 %       saved as output
-
+%       
+%       -'man_savename': use specified savename. 
 close all;
 
 progress_bar = 0;
@@ -60,9 +61,14 @@ cmperbin = 1; % Dombeck uses 2.5 cm bins, Ziv uses 2x2 bins with 3.75 sigma gaus
 use_mut_info = 0; % default
 minspeed = 1; % cm/s, default
 pos_align_file = '';
+man_savename = [];
+
 for j = 1:length(varargin)
     if strcmpi('progress_bar',varargin{j})
         progress_bar = varargin{j+1};
+    end
+    if strcmpi('man_savename',varargin{j})
+        man_savename = varargin{j+1};
     end
     if strcmpi('exclude_frames',varargin{j})
         exclude_frames = varargin{j+1};
@@ -327,10 +333,14 @@ p.stop;
 
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
-if rotate_to_std == 0
-    save_name = ['PlaceMaps' name_append '.mat'] ;
-elseif rotate_to_std == 1
-    save_name = ['PlaceMaps_rot_to_std' name_append '.mat'];
+if (~isempty(man_savename))
+    if rotate_to_std == 0
+        save_name = ['PlaceMaps' name_append '.mat'] ;
+    elseif rotate_to_std == 1
+        save_name = ['PlaceMaps_rot_to_std' name_append '.mat'];
+    end
+else
+    save_name = man_savename;
 end
 
 %%% NRK - save 1st and 2nd half stuff here
