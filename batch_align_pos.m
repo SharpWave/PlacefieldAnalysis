@@ -85,6 +85,7 @@ ymin = 20; % where you want to set the minimum y-value
 %% 0: Get varargins
 
 name_append = ''; % default
+circ2square_use = 0; % default
 for j = 1:length(varargin)
    if strcmpi(varargin{j},'manual_rot_overwrite')
        manual_rot_overwrite = varargin{j+1};

@@ -14,7 +14,8 @@ function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 %       Doerr)
 %
 %       -'exclude_frames': 1 x n array of frame numbers you wish to exclude from
-%       PFA analysis
+%       PFA analysis.  IMPORTANT: these must be aligned with the x, y, and
+%       FT data that comes out of pos_align.mat or AlignImagingToTracking.
 %
 %       -'rotate_to_std': 1 =  use position data that has been rotated back
 %       such that all local cues are aligned (found in Pos_align_corr_std.mat). 
@@ -166,8 +167,8 @@ if pos_align_use == 1
 end
 % Exclude frames specified in the session structure
 ind_use = ones(1,Flength);
-ind_use_half{1} = ones(1,Flength);
-ind_use_half{2} = ones(1,Flength);
+ind_use_half{1} = zeros(1,Flength);
+ind_use_half{2} = zeros(1,Flength);
 half = round(Flength/2);
 % Check for edge case where exclude frames extend beyond the end of FT
 if max(exclude_frames) > Flength
@@ -175,8 +176,8 @@ if max(exclude_frames) > Flength
    exclude_frames = temp;
 end
 ind_use(exclude_frames) = zeros(1,length(exclude_frames)); % Send bad frames to zero
-ind_use_half{1}(1:half) = zeros(1,length(1:half)); % Get 1st half valid indices
-ind_use_half{2}(half+1:length(ind_use)) = zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
+ind_use_half{1}(1:half) = 1; %zeros(1,length(1:half)); % Get 1st half valid indices
+ind_use_half{2}(half+1:length(ind_use)) = 1; %zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
 % Use only frames that are not excluded in the session structure AND are
 % within the specified arena limits
 frames_use_ind = ind_use & pos_ind_use;
