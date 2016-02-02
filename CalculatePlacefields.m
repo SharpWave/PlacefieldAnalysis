@@ -14,8 +14,15 @@ function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 %       Doerr)
 %
 %       -'exclude_frames': 1 x n array of frame numbers you wish to exclude from
-%       PFA analysis.  IMPORTANT: these must be aligned with the x, y, and
-%       FT data that comes out of pos_align.mat or AlignImagingToTracking.
+%       PFA analysis. IMPORTANT - these frames correspond to position/FT
+%       data that has already been aligned by running
+%       AlignImagingToTracking.
+%
+%       -'exclude_frames_raw: same as exclude_frames but using indices from
+%       raw FT data out of ProcOut.mat that has NOT been aligned to
+%       position data (e.g. bad/dropped frames identified in Mosaic).  Can
+%       be used in conjunction with 'exclude_frames' if you have both types
+%       of frames you wish to exclude
 %
 %       -'rotate_to_std': 1 =  use position data that has been rotated back
 %       such that all local cues are aligned (found in Pos_align_corr_std.mat). 
@@ -39,11 +46,13 @@ function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 %       'pos_align_file' with two arguments: 1) the name of the file to
 %       load, and 2) a name to append to the Placefields file that will be
 %       saved as output
-
+%       
+%       -'man_savename': use specified savename. 
 close all;
 
 progress_bar = 0;
 exclude_frames = [];
+exclude_frames_raw = [];
 rotate_to_std = 0;
 name_append = '';
 name_append2 = '';
@@ -52,12 +61,20 @@ cmperbin = 1; % Dombeck uses 2.5 cm bins, Ziv uses 2x2 bins with 3.75 sigma gaus
 use_mut_info = 0; % default
 minspeed = 1; % cm/s, default
 pos_align_file = '';
+man_savename = [];
+
 for j = 1:length(varargin)
     if strcmpi('progress_bar',varargin{j})
         progress_bar = varargin{j+1};
     end
+    if strcmpi('man_savename',varargin{j})
+        man_savename = varargin{j+1};
+    end
     if strcmpi('exclude_frames',varargin{j})
         exclude_frames = varargin{j+1};
+    end
+    if strcmpi('exclude_frames_raw',varargin{j})
+        exclude_frames_raw = varargin{j+1};
     end
     if strcmpi('rotate_to_std',varargin{j})
         rotate_to_std = varargin{j+1};
@@ -84,6 +101,7 @@ for j = 1:length(varargin)
 end
 name_append = [name_append name_append2];
 
+%%
 load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT caltrain NumFrames
 
 SR = 20;
@@ -153,6 +171,15 @@ catch % If no alignment has been performed, alert the user
 end
 
 Flength = length(x);
+
+%% Adjust exclude_frames_raw if applicable
+
+if ~isempty(exclude_frames_raw)
+    % take raw/non-aligned frame inidices that aligned with FT from
+    % ProcOut.mat file and align to aligned position/FT data.
+    exclude_frames = [exclude_frames exclude_frames_raw - (FToffset) + 2]; % concatenate to exclude_frames 
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -306,10 +333,14 @@ p.stop;
 
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
-if rotate_to_std == 0
-    save_name = ['PlaceMaps' name_append '.mat'] ;
-elseif rotate_to_std == 1
-    save_name = ['PlaceMaps_rot_to_std' name_append '.mat'];
+if isempty(man_savename)
+    if rotate_to_std == 0
+        save_name = ['PlaceMaps' name_append '.mat'] ;
+    elseif rotate_to_std == 1
+        save_name = ['PlaceMaps_rot_to_std' name_append '.mat'];
+    end
+else
+    save_name = man_savename;
 end
 
 %%% NRK - save 1st and 2nd half stuff here

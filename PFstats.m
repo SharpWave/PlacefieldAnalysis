@@ -61,15 +61,17 @@ if progress_bar == 1
     p = ProgressBar(NumNeurons);
 end
 for i = 1:NumNeurons
-    display(['calculating PF center for neuron ',int2str(i)]);
+    if progress_bar == 1
+        p.progress;
+    else
+        display(['calculating PF center for neuron ',int2str(i)]);
+    end
     peakval = max(TMap{i}(:));
     ThreshMap = TMap{i}.*(TMap{i} > peakval/2);
     BoolMap = ThreshMap > 0;
     b{i} = bwconncomp(BoolMap);
     r{i} = regionprops(b{i},'area','centroid');
-    if progress_bar == 1
-        p.progress;
-    end
+    
 end
 if progress_bar == 1
     p.stop;
@@ -80,7 +82,12 @@ if progress_bar == 1
     p = ProgressBar(NumNeurons);
 end
 for i = 1:NumNeurons
-    display(['repackaging PF info for neuron ',int2str(i)])
+    if progress_bar == 1
+        p.progress;
+    else
+        display(['repackaging PF info for neuron ',int2str(i)])
+    end
+    
     NumPF(i) = b{i}.NumObjects;
     PFpixels{i,1} = [];
     PFcentroid{i,1} = [];
@@ -97,9 +104,7 @@ for i = 1:NumNeurons
     % that the cell only fires in once, but another, smaller field that the
     % cell fires reliably and on numerous passes, wouldn't it be good to
     % know that also?
-    if progress_bar == 1
-        p.progress;
-    end
+    
 end
 if progress_bar == 1
     p.stop;
@@ -116,7 +121,11 @@ if progress_bar == 1
     p = ProgressBar(NumNeurons);
 end
 for i = 1:NumNeurons
-    display(['calculating PF visits for neuron ',int2str(i)])
+    if progress_bar == 1
+        p.progress;
+    else
+        display(['calculating PF visits for neuron ',int2str(i)])
+    end
     PFnumepochs(i,1) = 0;
     PFepochs{i,1} = [];
     for j = 1:NumPF(i)
@@ -137,9 +146,7 @@ for i = 1:NumNeurons
         PFepochs{i,j} = NP_FindSupraThresholdEpochs(PixelBool,eps,0);
         PFnumepochs(i,j) = size(PFepochs{i,j},1);
     end
-    if progress_bar == 1
-        p.progress;
-    end
+    
 end
 if progress_bar == 1
     p.stop;
@@ -150,7 +157,12 @@ if progress_bar == 1
     p = ProgressBar(NumNeurons);
 end
 for i = 1:NumNeurons
-    display(['calculating PF hits for neuron ',int2str(i)])
+    
+    if progress_bar == 1
+        p.progress;
+    else
+        display(['calculating PF hits for neuron ',int2str(i)])
+    end
 
     for j = 1:NumPF(i)
         PFactive{i,j} = [];
@@ -164,12 +176,10 @@ for i = 1:NumNeurons
             PFpcthits(i,j) = PFnumhits(i,j)/PFnumepochs(i,j);
         end
     end
-    if progress_bar == 1
-        p.progress;
-    end
+    
 end
 if progress_bar == 1
-    p.end;
+    p.stop;
 end
 
 if rot_to_std == 0

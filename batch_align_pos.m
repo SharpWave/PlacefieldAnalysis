@@ -98,6 +98,10 @@ for j = 1:length(varargin)
    end
    if strcmpi(varargin{j},'manual_limits')
       manual_limits = varargin{j+1}; 
+      % Make the same length as all the reg_struct sessions + 1
+      if length(manual_limits) ~= (length(reg_struct) + 1)
+          manual_limits(1:(length(reg_struct) + 1)) = manual_limits;
+      end
    end
    if strcmpi(varargin{j},'name_append')
       name_append = varargin{j+1}; 
