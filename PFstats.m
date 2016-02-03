@@ -34,12 +34,12 @@ for j = 1:length(varargin)
         if ~isempty(alt_file_use)
             alt_file = 1;
         end
-        if strcmpi('progress_bar',varargin{j})
+    end
+   if strcmpi('progress_bar',varargin{j})
             progress_bar = varargin{j+1};
-        end
-        if strcmpi('tmap_thresh_denom',varargin{j})
-            tmap_thresh_denom = varargin{j+1};
-        end
+   end
+   if strcmpi('tmap_thresh_denom',varargin{j})
+       tmap_thresh_denom = varargin{j+1};
    end
 end
 
@@ -197,7 +197,7 @@ elseif rot_to_std == 1
 end
 
 save(save_name, 'PFpcthits', 'PFnumhits', 'PFactive', 'PFnumepochs', 'PFepochs',...
-    'MaxPF', 'PFcentroid', 'PFsize', 'PFpixels', '-v7.3');
+    'MaxPF', 'PFcentroid', 'PFsize', 'PFpixels', 'tmap_thresh_denom', '-v7.3');
 
 end
 
