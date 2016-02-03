@@ -14,6 +14,10 @@ function [] = PFstats(rot_to_std, varargin)
 %       'alt_file_use' with  the name of the file to
 %       load and the text you want to append onto the end of the PFstats
 %       output file
+%
+%   -'tmap_thresh':  used to threshold the TMap to define your place-field
+%       extents by taking the max TMap value, dividing by tmap_thresh, and
+%       defining anythin above this value as in-field (default = 2);
 
 if nargin == 0
     rot_to_std = 0;
@@ -22,6 +26,7 @@ end
 alt_file = 0;
 progress_bar = 1; % default
 name_append = '';
+tmap_thresh = 2; % default
 for j = 1:length(varargin)
     if strcmpi(varargin{j},'alt_file_use')
         alt_file_use = varargin{j+1};
@@ -31,6 +36,9 @@ for j = 1:length(varargin)
         end
         if strcmpi('progress_bar',varargin{j})
             progress_bar = varargin{j+1};
+        end
+        if strcmpi('tmap_thresh',varargin{j})
+            tmap_thresh = varargin{j+1};
         end
    end
 end
@@ -67,7 +75,7 @@ for i = 1:NumNeurons
         display(['calculating PF center for neuron ',int2str(i)]);
     end
     peakval = max(TMap{i}(:));
-    ThreshMap = TMap{i}.*(TMap{i} > peakval/2);
+    ThreshMap = TMap{i}.*(TMap{i} > peakval/tmap_thresh);
     BoolMap = ThreshMap > 0;
     b{i} = bwconncomp(BoolMap);
     r{i} = regionprops(b{i},'area','centroid');
