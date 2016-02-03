@@ -177,7 +177,7 @@ Flength = length(x);
 if ~isempty(exclude_frames_raw)
     % take raw/non-aligned frame inidices that aligned with FT from
     % ProcOut.mat file and align to aligned position/FT data.
-    exclude_frames = [exclude_frames exclude_frames_raw - (FToffset) + 2]; % concatenate to exclude_frames 
+    exclude_frames = [exclude_frames, (exclude_frames_raw - (FToffset) + 2)]; % concatenate to exclude_frames 
 end
 
 
@@ -198,6 +198,9 @@ ind_use_half{1} = zeros(1,Flength);
 ind_use_half{2} = zeros(1,Flength);
 half = round(Flength/2);
 % Check for edge case where exclude frames extend beyond the end of FT
+% (usually due to adjustments in case of smoothing) - COULD BE A BUG HERE -
+% DOES exclude_frames get messed up/ misaligned by half the smoothing
+% window as a result of this???
 if max(exclude_frames) > Flength
    temp = exclude_frames(exclude_frames <= Flength);
    exclude_frames = temp;
