@@ -38,7 +38,7 @@ close all;
 %% Get varargin
 
 update_pos_realtime = 0; % Default setting
-epoch_length_lim = [];
+epoch_length_lim = 200; % default
 for j = 1:length(varargin)
    if strcmpi('update_pos_realtime', varargin{j})
       update_pos_realtime = varargin{j+1};

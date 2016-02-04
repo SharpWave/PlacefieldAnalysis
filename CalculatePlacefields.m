@@ -177,7 +177,7 @@ Flength = length(x);
 if ~isempty(exclude_frames_raw)
     % take raw/non-aligned frame inidices that aligned with FT from
     % ProcOut.mat file and align to aligned position/FT data.
-    exclude_frames = [exclude_frames exclude_frames_raw - (FToffset) + 2]; % concatenate to exclude_frames 
+    exclude_frames = [exclude_frames, (exclude_frames_raw - (FToffset) + 2)]; % concatenate to exclude_frames 
 end
 
 
@@ -194,17 +194,20 @@ if pos_align_use == 1
 end
 % Exclude frames specified in the session structure
 ind_use = ones(1,Flength);
-ind_use_half{1} = ones(1,Flength);
-ind_use_half{2} = ones(1,Flength);
+ind_use_half{1} = zeros(1,Flength);
+ind_use_half{2} = zeros(1,Flength);
 half = round(Flength/2);
 % Check for edge case where exclude frames extend beyond the end of FT
+% (usually due to adjustments in case of smoothing) - COULD BE A BUG HERE -
+% DOES exclude_frames get messed up/ misaligned by half the smoothing
+% window as a result of this???
 if max(exclude_frames) > Flength
    temp = exclude_frames(exclude_frames <= Flength);
    exclude_frames = temp;
 end
 ind_use(exclude_frames) = zeros(1,length(exclude_frames)); % Send bad frames to zero
-ind_use_half{1}(1:half) = zeros(1,length(1:half)); % Get 1st half valid indices
-ind_use_half{2}(half+1:length(ind_use)) = zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
+ind_use_half{1}(1:half) = 1; %zeros(1,length(1:half)); % Get 1st half valid indices
+ind_use_half{2}(half+1:length(ind_use)) = 1; %zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
 % Use only frames that are not excluded in the session structure AND are
 % within the specified arena limits
 frames_use_ind = ind_use & pos_ind_use;
