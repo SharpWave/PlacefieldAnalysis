@@ -110,16 +110,13 @@ if exist('Pos_temp.mat','file') || exist('Pos.mat','file')
     if strcmpi(use_temp,'y')
         load(load_file,'Xpix', 'Ypix', 'xAVI', 'yAVI', 'MoMtime', 'MouseOnMazeFrame');
         MoMtime
-        if ~exist('MouseOnMazeFrame','var')
-           MouseOnMazeFrame = round((MoMtime-time(1))/(time(2)-time(1)))
-        end
     else
         MouseOnMazeFrame = input('on what frame number does Mr. Mouse arrive on the maze??? --->');
-        MoMtime = (MouseOnMazeFrame)*(time(2)-time(1))+time(1)
+        MoMtime = MouseOnMazeFrame*0.03+time(1)
     end
 else
     MouseOnMazeFrame = input('on what frame number does Mr. Mouse arrive on the maze??? --->');
-    MoMtime = (MouseOnMazeFrame)*(time(2)-time(1))+time(1)
+    MoMtime = MouseOnMazeFrame*0.03+time(1)
 end
 close(h1); % Close Video Player
 
@@ -284,15 +281,13 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
         stats = regionprops(d>20 & maze,'area','solidity','centroid','eccentricity','majoraxislength','minoraxislength');        
         
         %Find the blob that corresponds to the mouse. 
-        MouseBlob = find(   [stats.Area] > 600 & ...
-                            [stats.MajorAxisLength] > 25 & ...
-                            [stats.MinorAxisLength] > 25 & ...
-                            [stats.Solidity] > 0.8); 
-        if length(MouseBlob)==1      
+        MouseBlob = find(   [stats.Area] > 300 & ...
+                            [stats.MajorAxisLength] > 10 & ...
+                            [stats.MinorAxisLength] > 10);
+        if length(MouseBlob)==1     
             xm = stats(MouseBlob).Centroid(1); 
             ym = stats(MouseBlob).Centroid(2);
         elseif length(MouseBlob)>1
-            
             %Get mouse position on the previous frame. 
             previousX = xAVI(framesToCorrect(i)-1);
             previousY = yAVI(framesToCorrect(i)-1); 
@@ -312,9 +307,11 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
                 xm = stats(MouseBlob(whichMouseX)).Centroid(1);
                 ym = stats(MouseBlob(whichMouseY)).Centroid(2); 
             else
+                %keyboard;
                 [xm,ym] = ginput(1); 
             end
         else          
+            %keyboard;
             [xm,ym] = ginput(1);
         end
         
@@ -342,7 +339,7 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
     % plot updated velocity
     figure(555);
     subplot(4,3,7:9);
-    vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)/(time(2)-time(1));
+    vel = hypot(diff(Xpix),diff(Ypix))/(time(2)-time(1));
     vel = [vel; vel(end)]; % Make the vectors the same size
     plot(time(MouseOnMazeFrame:end),vel(MouseOnMazeFrame:end));
     hold on
