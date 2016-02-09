@@ -1,4 +1,4 @@
-function [ pval ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,isrunning,toplot,varargin)
+function [ pval,ExperimentalH ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,isrunning,toplot,varargin)
 % function [ pval ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,toplot,varargin)
 % varargin = 'suppress_output',1 suppresses output of ExperimentalH, 0 =
 % default
