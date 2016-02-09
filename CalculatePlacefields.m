@@ -72,6 +72,7 @@ for j = 1:length(varargin)
 end
 
 if (~isempty(alt_inputs))
+    display('using user-specified neuronal activity');
     load(alt_inputs,'NeuronImage','NeuronPixels','FT');
 else
     load ('ProcOut.mat','NeuronImage','NeuronPixels','FT');
@@ -126,7 +127,6 @@ try % Pull aligned data
 catch % If no alignment has been performed, alert the user
     disp('Using position data that has NOT been aligned to other like sessions.')
     disp('NOT good for comparisons across sessions...run batch_align_pos for this.')
-    keyboard
     [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
     xmax = max(x); xmin = min(x);
     ymax = max(y); ymin = min(y);
@@ -287,7 +287,7 @@ p.stop;
 
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
-if (~isempty(man_savename))
+if (isempty(man_savename))
     if rotate_to_std == 0
         save_name = ['PlaceMaps' name_append '.mat'] ;
     elseif rotate_to_std == 1
