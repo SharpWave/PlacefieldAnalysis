@@ -105,6 +105,7 @@ for j = 1:length(varargin)
 end
 name_append = [name_append name_append2];
 
+<<<<<<< HEAD
 if (~isempty(alt_inputs))
     display('using user-specified neuronal activity');
     load(alt_inputs,'NeuronImage','NeuronPixels','FT');
@@ -113,6 +114,10 @@ else
 end
 
 NumNeurons = size(FT,1);
+=======
+%%
+load ProcOut.mat; % ActiveFrames NeuronImage NeuronPixels OrigMean FT caltrain NumFrames
+>>>>>>> origin/master
 
 SR = 20;
 Pix2Cm = 0.15;
@@ -171,7 +176,10 @@ try % Pull aligned data
 catch % If no alignment has been performed, alert the user
     disp('Using position data that has NOT been aligned to other like sessions.')
     disp('NOT good for comparisons across sessions...run batch_align_pos for this.')
+<<<<<<< HEAD
+=======
 %     keyboard
+>>>>>>> origin/master
     [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
     xmax = max(x); xmin = min(x);
     ymax = max(y); ymin = min(y);
@@ -322,14 +330,24 @@ p = ProgressBar(NumNeurons);
 for i = 1:NumNeurons
   [TMap{i}, TMap_gauss{i}, TMap_unsmoothed{i}] = calcmapdec(FT(i,:), ...
       RunOccMap, Xbin, Ybin, isrunning & frames_use_ind, cmperbin);
+<<<<<<< HEAD
+  [pval(i),SpatialH(i)] = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind,...
+      0, 'suppress_output', progress_bar);
+=======
   [pval(i), pvalI(i)] = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind,...
       0, 'suppress_output', progress_bar,'use_mut_info',use_mut_info);
+>>>>>>> origin/master
   if calc_half == 1 % Calculate half-session TMaps and p-values
       for j = 1:2
           [TMap_half(j).Tmap{i}, TMap_half(j).TMap_gauss{i}, TMap_half(j).TMap_unsmoothed{i}] = ...
               calcmapdec(FT(i,:), RunOccMap, Xbin, Ybin, isrunning & frames_use_ind_half{j}, cmperbin);
+<<<<<<< HEAD
+          [pval_half{j}.pval(i),pval_half{j}.SpatialH(i)] = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind_half{j},...
+              0, 'suppress_output', progress_bar);
+=======
           [pval_half{j}.pval(i), pval_half{j}.pvalI(i)] = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind_half{j},...
               0, 'suppress_output', progress_bar,'use_mut_info',use_mut_info);
+>>>>>>> origin/master
       end
   else
       TMap_half = [];
@@ -344,7 +362,11 @@ p.stop;
 
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
+<<<<<<< HEAD
+if (isempty(man_savename))
+=======
 if isempty(man_savename)
+>>>>>>> origin/master
     if rotate_to_std == 0
         save_name = ['PlaceMaps' name_append '.mat'] ;
     elseif rotate_to_std == 1
@@ -359,11 +381,16 @@ end
 save(save_name,'x', 'y', 't', 'xOutline', 'yOutline', 'speed','minspeed', ...
     'FT', 'TMap','TMap_gauss', 'TMap_unsmoothed', 'RunOccMap', 'OccMap', ...
     'SpeedMap', 'RunSpeedMap', 'NeuronImage', 'NeuronPixels',...
+<<<<<<< HEAD
+    'cmperbin', 'pval','SpatialH','Xbin', 'Ybin', 'FToffset', 'FToffsetRear', 'isrunning',...
+    'Xedges', 'Yedges','exclude_frames','aviFrame','TMap_half','pval_half','-v7.3'); 
+=======
     'cmperbin', 'pval', 'Xbin', 'Ybin', 'FToffset', 'FToffsetRear', 'isrunning',...
     'Xedges', 'Yedges','exclude_frames','aviFrame','TMap_half','pval_half',...
     'pvalI','Pix2Cm','-v7.3'); 
 
 output_filename = save_name;
+>>>>>>> origin/master
 
 return;
 

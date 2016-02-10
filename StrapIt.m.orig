@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+function [ pval,ExperimentalH ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,isrunning,toplot,varargin)
+=======
 function [ pval, pvalI ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,isrunning,toplot,varargin)
+>>>>>>> origin/master
 % function [ pval ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,toplot,varargin)
 % pval uses entropy, pvalI uses mutual information
 % varargin = 'suppress_output',1 supresses output of ExperimentalH, 0 =
