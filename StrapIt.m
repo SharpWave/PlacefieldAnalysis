@@ -1,4 +1,4 @@
-function [ pval, pvalI ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,isrunning,toplot,varargin)
+function [ pval, pvalI, SpatialH ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,isrunning,toplot,varargin)
 % function [ pval ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goodepochs,toplot,varargin)
 % pval uses entropy, pvalI uses mutual information
 % varargin = 'suppress_output',1 supresses output of ExperimentalH, 0 =
@@ -18,7 +18,7 @@ for j = 1:length(varargin)
     
 end
 
-if (nargin < 8)
+if ~exist('toplot','var')
     toplot = 0;
 end
 
@@ -102,6 +102,8 @@ if calc_mut_info == 1
 else
     pvalI = nan;
 end
+
+SpatialH = ExperimentalH;
 
 end
 
