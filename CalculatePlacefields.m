@@ -48,6 +48,9 @@ function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 %       saved as output
 %       
 %       -'man_savename': use specified savename. 
+%
+%       -'use_unaligned_data': use Pos.mat file in lieu of Pos_align files
+%       (default is to use aligned data!)
 close all;
 
 progress_bar = 0;
@@ -62,6 +65,7 @@ use_mut_info = 0; % default
 minspeed = 1; % cm/s, default
 pos_align_file = '';
 man_savename = [];
+use_unaligned_data = 0; % default
 
 for j = 1:length(varargin)
     if strcmpi('progress_bar',varargin{j})
@@ -97,6 +101,9 @@ for j = 1:length(varargin)
     if strcmpi(varargin{j},'pos_align_file')
         pos_align_file = varargin{j+1};
         name_append2 = varargin{j+2};
+    end
+    if strcmpi(varargin{j},'use_unaligned_data')
+        use_unaligned_data = varargin{j+1};
     end
 end
 name_append = [name_append name_append2];
@@ -140,7 +147,7 @@ try % Pull aligned data
     if ~isempty(pos_align_file) % Load alternate file with aligned position data if specified
         load(pos_align_file)
         disp(['Using position data that has been aligned to other like sessions in file "' pos_align_file '"'])
-    elseif isempty(pos_align_file) % load either Pos_align or Pos_align_std_corr
+    elseif isempty(pos_align_file) && use_unaligned_data == 0  % load either Pos_align or Pos_align_std_corr
         if rotate_to_std == 0
             load Pos_align.mat
             disp('Using position data that has been aligned to other like sessions.')
@@ -148,6 +155,8 @@ try % Pull aligned data
             load Pos_align_std_corr.mat
             disp('Using position data that has been aligned to other like sessions AND rotated so that local cues are aligned.')
         end
+    elseif isempty(pos_align_file) && use_unaligned_data == 1
+            disp('Loading Pos.mat for position data that has NOT been aligned to other sessions')
     end
     % Note that xmin, xmax, ymin, and ymax (used below) have been pulled from
     % Pos_align.mat.
@@ -163,7 +172,7 @@ try % Pull aligned data
 catch % If no alignment has been performed, alert the user
     disp('Using position data that has NOT been aligned to other like sessions.')
     disp('NOT good for comparisons across sessions...run batch_align_pos for this.')
-%     keyboard
+
     [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
     xmax = max(x); xmin = min(x);
     ymax = max(y); ymin = min(y);
@@ -206,12 +215,13 @@ if max(exclude_frames) > Flength
    exclude_frames = temp;
 end
 ind_use(exclude_frames) = zeros(1,length(exclude_frames)); % Send bad frames to zero
+half_validonly = find(cumsum(ind_use) == round(sum(ind_use)/2),1,'last'); % Get halfway point of valid indices
 ind_use_half{1}(1:half) = 1; %zeros(1,length(1:half)); % Get 1st half valid indices
 ind_use_half{2}(half+1:length(ind_use)) = 1; %zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
 % Use only frames that are not excluded in the session structure AND are
 % within the specified arena limits
 frames_use_ind = ind_use & pos_ind_use;
-frames_use_ind_half{1} = ind_use_half{1} & pos_ind_use;
+frames_use_ind_half{1} = ind_use_half{1} & pos_ind_use; % NRK note: this should probably be changed to chop only the valid indices in half, not do an AND between the first half indices and valid indices
 frames_use_ind_half{2} = ind_use_half{2} & pos_ind_use;
 frames_use = find(frames_use_ind); 
 
