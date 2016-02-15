@@ -213,7 +213,7 @@ end
 ind_use = ones(1,Flength);
 ind_use_half{1} = zeros(1,Flength);
 ind_use_half{2} = zeros(1,Flength);
-half = round(Flength/2);
+half = round(Flength/2); % Might not be needed anymore - replaced by half_validonly below
 % Check for edge case where exclude frames extend beyond the end of FT
 % (usually due to adjustments in case of smoothing) - COULD BE A BUG HERE -
 % DOES exclude_frames get messed up/ misaligned by half the smoothing
@@ -223,9 +223,9 @@ if max(exclude_frames) > Flength
    exclude_frames = temp;
 end
 ind_use(exclude_frames) = zeros(1,length(exclude_frames)); % Send bad frames to zero
-half_validonly = find(cumsum(ind_use) == round(sum(ind_use)/2),1,'last'); % Get halfway point of valid indices
-ind_use_half{1}(1:half) = 1; %zeros(1,length(1:half)); % Get 1st half valid indices
-ind_use_half{2}(half+1:length(ind_use)) = 1; %zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
+half_validonly = find(cumsum(ind_use) == round(sum(ind_use)/2),1,'last'); % Get halfway point of valid indices only
+ind_use_half{1}(1:half_validonly) = 1; %zeros(1,length(1:half)); % Get 1st half valid indices
+ind_use_half{2}(half_validonly+1:length(ind_use)) = 1; %zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
 % Use only frames that are not excluded in the session structure AND are
 % within the specified arena limits
 frames_use_ind = ind_use & pos_ind_use;
