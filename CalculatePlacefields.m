@@ -276,6 +276,8 @@ Ybin(find(Ybin == (NumYBins+1))) = NumYBins;
 Xbin(find(Xbin == 0)) = 1;
 Ybin(find(Ybin == 0)) = 1;
 
+PositionVector = sub2ind([NumXBins,NumYBins],Xbin,Ybin);
+keyboard;
 
 RunOccMap = zeros(NumXBins,NumYBins); % # of samples in bin while running
 RunOccMap_half{1} = zeros(NumXBins,NumYBins); %RunOccMap for 1st half of session
