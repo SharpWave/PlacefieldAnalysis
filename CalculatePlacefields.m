@@ -277,7 +277,6 @@ Xbin(find(Xbin == 0)) = 1;
 Ybin(find(Ybin == 0)) = 1;
 
 PositionVector = sub2ind([NumXBins,NumYBins],Xbin,Ybin);
-keyboard;
 
 RunOccMap = zeros(NumXBins,NumYBins); % # of samples in bin while running
 RunOccMap_half{1} = zeros(NumXBins,NumYBins); %RunOccMap for 1st half of session
@@ -337,6 +336,7 @@ for i = 1:NumNeurons
       TMap_half = [];
       pval_half = [];
   end
+  SpatialI(i) = Dave_MutInfo(PositionVector(find(isrunning)),NumXBins*NumYBins,FT(i,find(isrunning))+1,2)
   
   if progress_bar == 1
      p.progress; 
@@ -363,7 +363,7 @@ save(save_name,'x', 'y', 't', 'xOutline', 'yOutline', 'speed','minspeed', ...
     'SpeedMap', 'RunSpeedMap', 'NeuronImage', 'NeuronPixels',...
     'cmperbin', 'pval', 'Xbin', 'Ybin', 'FToffset', 'FToffsetRear', 'isrunning',...
     'Xedges', 'Yedges','exclude_frames','aviFrame','TMap_half','pval_half',...
-    'pvalI','SpatialH','Pix2Cm','-v7.3'); 
+    'pvalI','SpatialH','Pix2Cm','SpatialI','-v7.3'); 
 
 output_filename = save_name;
 
