@@ -89,6 +89,7 @@ for i = 1:length(Yedges)
 end
 
 % for each neuron
+try
 for j = 1:NumNeurons
     % get PF outline (if avail)
     WhichField = MaxPF(j);
@@ -108,10 +109,14 @@ for j = 1:NumNeurons
         %plot(xt,yt,'Color',colors(j,:),'LineWidth',5);
     end
 end
+catch
+    disp('MPFM_dual error catching')
+    keyboard
+end
 
 
 
-for i = 5400:7800%1:NumFrames
+for i = 1:NumFrames
     
     % load correct Plexon movie frame
     % calculate correct frame based on iteration and offsets
