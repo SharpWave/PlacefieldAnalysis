@@ -1,5 +1,5 @@
-function [ ] = MPFM_dual(out_avifile,infile,clims,Pix2Cm,varargin)
-% MPFM_dual(out_avifile,infile,clims,Pix2Cm)
+function [ ] = MPFM_dual(out_avifile,infile,clims,varargin)
+% MPFM_dual(out_avifile,infile,clims,varargin)
 %   make a fun movie of our mouse and his placefields
 %
 % INPUTS
@@ -7,7 +7,9 @@ function [ ] = MPFM_dual(out_avifile,infile,clims,Pix2Cm,varargin)
 %
 %   infile: h5 brain imaging file you wish to show
 %
-%   clims: ?
+%   clims: sets dynamic range of brain video.  Suggest [-1000 to 1000] to
+%   start.  Use with 'user_frames' limited to small number to produce short
+%   test videos if necessary.
 %
 %   Pix2Cm: conversion factor, should be whatever you used for running
 %   CalculatePlacefields
@@ -15,28 +17,33 @@ function [ ] = MPFM_dual(out_avifile,infile,clims,Pix2Cm,varargin)
 %   varargins:
 %       'brain_only': plot brain imaging only
 %       'PF_only': plot placefields on video tracking only
+%       'user_frames': only make video for specified frame numbers, NOT the
+%       whole video(default).  Must follow with an 1 x n vector of the n
+%       frames you wish to include in the video.
+%       'alt_PM_file': enter to use user specified file in lieu of
+%       PlaceMaps.mat
+%       'alt_stats_file: same as alt_pos_file but for PFstats.mat
 
 video_type = 1; % default to show both videos side-by-side
-if length(varargin) == 1
-   if strcmpi(varargin{1},'brain_only')
+user_frames = [];
+for j = 1:length(varargin)
+   if strcmpi(varargin{j},'brain_only')
        video_type = 2;
-   elseif strcmpi(varargin{1},'PF_only')
+   elseif strcmpi(varargin{j},'PF_only')
        video_type = 3;
+   end
+   if strcmpi(varargin{j},'user_frames')
+       user_frames = varargin{j+1};
+   end
+   if strcmpi(varargin{j},'alt_PM_file')
+       alt_PM_file = varargin{j+1};
+   end
+   if strcmpi(varargin{j},'alt_stats_file')
+       alt_stats_file = varargin{j+1};
    end
 end
 
 close all;
-
-if (~exist('Pix2Cm'))
-    Pix2Cm = 0.15;
-    display('assuming room 201b');
-    % factor for 201a is 0.0709
-    % else
-    %     if (strcmp(RoomStr,'201a'))
-    %         Pix2Cm = 0.0709;
-    %         display('Room 201a');
-    %     end
-end
 
 aviSR = 30.0003;
 
@@ -50,8 +57,30 @@ catch
     obj = VideoReader(avi_filepath);
 end
 
-load PlaceMaps.mat;
-load PFstats.mat;
+if ~exist(alt_PM_file,'file') || isempty(alt_PM_file)
+    load PlaceMaps.mat;
+elseif ~isempty(alt_PM_file)
+    disp(['Loading ' alt_PM_file ' in lieu of PlaceMaps.mat'])
+    load(alt_PM_file);
+end
+
+if ~exist(alt_stats_file,'file') || isempty(alt_stats_file)
+    load PFstats.mat;
+elseif ~isempty(alt_stats_file)
+    disp(['Loading ' alt_stats_file ' in lieu of PFstats.mat'])
+    load(alt_stats_file)
+end
+
+if (~exist('Pix2Cm'))
+    Pix2Cm = 0.15;
+    display('assuming room 201b');
+    % factor for 201a is 0.0709
+    % else
+    %     if (strcmp(RoomStr,'201a'))
+    %         Pix2Cm = 0.0709;
+    %         display('Room 201a');
+    %     end
+end
 
 NumFrames = length(x);
 NumNeurons = length(NeuronImage);
@@ -115,8 +144,13 @@ catch
 end
 
 
-
-for i = 1:NumFrames
+% Load frames to use for vido
+if isempty(user_frames)
+    frames_use = 1:NumFrames;
+else
+    frames_use = user_frames;
+end
+for i = frames_use
     
     % load correct Plexon movie frame
     % calculate correct frame based on iteration and offsets
