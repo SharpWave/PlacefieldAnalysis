@@ -45,6 +45,7 @@ end
 
 % Load appropriate PlaceMaps file
 if alt_file == 1
+    disp(['Loading ' alt_file_use ' in lieu of PlaceMaps.mat'])
     load(alt_file_use)
 elseif alt_file == 0
     if rot_to_std == 0
