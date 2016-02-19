@@ -9,7 +9,7 @@ function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 %       bootstrapping each placefield's entropy.
 %
 % varargins
-%       -'progress_bar': 1 uses a progress bar in lieu of spam to screen
+%       -'progress_bar': 1 (default) uses a progress bar in lieu of spam to screen
 %       while running StrapIt (needs ProgressBar function written by Stefan
 %       Doerr)
 %
@@ -53,7 +53,7 @@ function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 %       (default is to use aligned data!)
 close all;
 
-progress_bar = 0;
+progress_bar = 1;
 exclude_frames = [];
 exclude_frames_raw = [];
 rotate_to_std = 0;
