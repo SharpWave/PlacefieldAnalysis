@@ -1,7 +1,11 @@
-function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp] = AlignImagingToTracking(Pix2Cm,FT)
+function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 SR = 20;
+
+if ~exist('HalfWindow','var')
+    HalfWindow = 10;
+end
 
 try
     load Pos.mat
@@ -68,7 +72,7 @@ end
 speed(1:100) = 0; % a hack, but otherwise screwy things happen
 
 %%%%%%%%% adjust by half the movie smoothing window
-HalfWindow = 10;
+%HalfWindow = 10;
 
 % shift position and speed right
 x = [zeros(1,HalfWindow),x(1:end-HalfWindow)];

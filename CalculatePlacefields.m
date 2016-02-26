@@ -67,8 +67,12 @@ pos_align_file = '';
 man_savename = [];
 use_unaligned_data = 0; % default
 alt_inputs = []; % default
+HalfWindow = 10;
 
 for j = 1:length(varargin)
+    if strcmpi('half_window',varargin{j})
+        HalfWindow = varargin{j+1};
+    end
     if strcmpi('progress_bar',varargin{j})
         progress_bar = varargin{j+1};
     end
@@ -181,7 +185,7 @@ catch % If no alignment has been performed, alert the user
     disp('Using position data that has NOT been aligned to other like sessions.')
     disp('NOT good for comparisons across sessions...run batch_align_pos for this.')
 
-    [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
+    [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow);
     xmax = max(x); xmin = min(x);
     ymax = max(y); ymin = min(y);
     pos_align_use = 0;

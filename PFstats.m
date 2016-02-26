@@ -60,7 +60,7 @@ end
 % i.e. the BEST place cell is active in 35% of crossings?
 
 
-NumNeurons = length(NeuronImage);
+NumNeurons = length(NeuronImage)
 NumFrames = length(Xbin);
 
 % some analysis using bwconncomp and regionprops
