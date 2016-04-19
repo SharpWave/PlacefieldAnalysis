@@ -11,7 +11,7 @@ function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 % varargins
 %       -'progress_bar': 1 uses a progress bar in lieu of spam to screen
 %       while running StrapIt (needs ProgressBar function written by Stefan
-%       Doerr)
+%       Doerr).  Default = 1;
 %
 %       -'exclude_frames': 1 x n array of frame numbers you wish to exclude from
 %       PFA analysis. IMPORTANT - these frames correspond to position/FT
@@ -53,7 +53,7 @@ function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 %       (default is to use aligned data!)
 close all;
 
-progress_bar = 0;
+progress_bar = 1;
 exclude_frames = [];
 exclude_frames_raw = [];
 rotate_to_std = 0;
@@ -68,7 +68,7 @@ man_savename = [];
 use_unaligned_data = 0; % default
 alt_inputs = []; % default
 HalfWindow = 10;
-
+NumShuffles = 500; % default for running bootstrapping in StrapIt below
 for j = 1:length(varargin)
     if strcmpi('half_window',varargin{j})
         HalfWindow = varargin{j+1};
@@ -112,6 +112,9 @@ for j = 1:length(varargin)
     end
     if strcmpi(varargin{j},'use_unaligned_data')
         use_unaligned_data = varargin{j+1};
+    end
+    if strcmpi(varargin{j},'NumShuffles')
+        NumShuffles = varargin{j+1};
     end
 end
 name_append = [name_append name_append2];
@@ -198,7 +201,9 @@ Flength = length(x);
 if ~isempty(exclude_frames_raw)
     % take raw/non-aligned frame inidices that aligned with FT from
     % ProcOut.mat file and align to aligned position/FT data.
-    exclude_frames = [exclude_frames, (exclude_frames_raw - (FToffset) + 2)]; % concatenate to exclude_frames 
+    exclude_aligned = exclude_frames_raw - FToffset + 2;
+    exclude_aligned = exclude_aligned(exclude_aligned > 0); % Get rid of any negative values (corresponding to times before the mouse was on the maze)
+    exclude_frames = [exclude_frames, exclude_aligned]; % concatenate to exclude_frames 
 end
 
 
@@ -338,19 +343,19 @@ for i = 1:NumNeurons
   [TMap{i}, TMap_gauss{i}, TMap_unsmoothed{i}] = calcmapdec(FT(i,:), ...
       RunOccMap, Xbin, Ybin, isrunning & frames_use_ind, cmperbin);
   [pval(i), pvalI(i),SpatialH(i)] = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind,...
-      0, 'suppress_output', progress_bar,'use_mut_info',use_mut_info);
+      0, 'suppress_output', progress_bar,'use_mut_info',use_mut_info,'NumShuffles',NumShuffles);
   if calc_half == 1 % Calculate half-session TMaps and p-values
       for j = 1:2
           [TMap_half(j).Tmap{i}, TMap_half(j).TMap_gauss{i}, TMap_half(j).TMap_unsmoothed{i}] = ...
               calcmapdec(FT(i,:), RunOccMap, Xbin, Ybin, isrunning & frames_use_ind_half{j}, cmperbin);
           [pval_half{j}.pval(i), pval_half{j}.pvalI(i),pval_half{j}.SpatialH(i)] = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind_half{j},...
-              0, 'suppress_output', progress_bar,'use_mut_info',use_mut_info);
+              0, 'suppress_output', progress_bar,'use_mut_info',use_mut_info,'NumShuffles',NumShuffles);
       end
   else
       TMap_half = [];
       pval_half = [];
   end
-  SpatialI(i) = Dave_MutInfo(PositionVector(find(isrunning)),NumXBins*NumYBins,FT(i,find(isrunning))+1,2)
+  SpatialI(i) = Dave_MutInfo(PositionVector(find(isrunning)),NumXBins*NumYBins,FT(i,find(isrunning))+1,2);
   
   if progress_bar == 1
      p.progress; 
