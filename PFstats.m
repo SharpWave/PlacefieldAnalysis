@@ -9,11 +9,9 @@ function [] = PFstats(rot_to_std, varargin)
 %   that has been rotated such that local cues align
 %
 % varargins
-%   -'alt_file_use': use to load a Pos_align file that is not either
-%       Pos_align.mat or Pos_align_std_corr.mat. must follow
-%       'alt_file_use' with  the name of the file to
-%       load and the text you want to append onto the end of the PFstats
-%       output file
+%   -'alt_file_use': use to load a PlaceMaps.mat file other than
+%       'PlaceMaps.mat'.  Must include a second argument after the alternate
+%       name to use that includes the name to append onto the PFstats file.
 %
 %   -'tmap_thresh_denom':  used to threshold the TMap to define your place-field
 %       extents by taking the max TMap value, dividing by tmap_thresh_denom, and
