@@ -36,7 +36,8 @@ function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 %       -'cmperbin': centimeters per occupancy bin.  Default is 1.
 %
 %       -'calc_half': 0 = default. 1 = calculate TMap and pvalues for 1st
-%       and 2nd half of session along with whole session maps
+%       and 2nd half of session along with whole session maps. 2 = calc odd
+%       versus even minutes.
 %
 %       -'mispeed': threshold for calculating placemaps.  Any values below
 %           are not used. 1 cm/s = default.  
@@ -233,8 +234,13 @@ if max(exclude_frames) > Flength
 end
 ind_use(exclude_frames) = zeros(1,length(exclude_frames)); % Send bad frames to zero
 half_validonly = find(cumsum(ind_use) == round(sum(ind_use)/2),1,'last'); % Get halfway point of valid indices
-ind_use_half{1}(1:half) = 1; %zeros(1,length(1:half)); % Get 1st half valid indices
-ind_use_half{2}(half+1:length(ind_use)) = 1; %zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
+
+if calc_half == 1
+    ind_use_half{1}(1:half_validonly) = 1; %zeros(1,length(1:half)); % Get 1st half valid indices
+    ind_use_half{2}(half_validonly + 1:length(ind_use)) = 1; %zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
+elseif calc_half == 2
+    
+end
 % Use only frames that are not excluded in the session structure AND are
 % within the specified arena limits
 frames_use_ind = ind_use & pos_ind_use;
