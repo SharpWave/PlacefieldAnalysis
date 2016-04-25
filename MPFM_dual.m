@@ -7,7 +7,7 @@ function [ ] = MPFM_dual(out_avifile,infile,clims,Pix2Cm,varargin)
 %
 %   infile: h5 brain imaging file you wish to show
 %
-%   clims: ?
+%   clims: suggest starting with [-2000 2000]
 %
 %   Pix2Cm: conversion factor, should be whatever you used for running
 %   CalculatePlacefields
@@ -16,12 +16,16 @@ function [ ] = MPFM_dual(out_avifile,infile,clims,Pix2Cm,varargin)
 %       'brain_only': plot brain imaging only
 %       'PF_only': plot placefields on video tracking only
 
-video_type = 1; % default to show both videos side-by-side
-if length(varargin) == 1
-   if strcmpi(varargin{1},'brain_only')
-       video_type = 2;
-   elseif strcmpi(varargin{1},'PF_only')
-       video_type = 3;
+plot_PF = 1; % default
+video_type = 1; % default to show both videos side-by-side. 2 = brain only, 3 = PF only
+frames_use_manual = []; % default is empty, which uses all frames
+for j = 1:length(varargin)
+   if strcmpi('video_type',varargin{j})
+       video_type = varargin{j+1};
+   elseif strcmpi('plot_PF',varargin{j})
+       plot_PF = varargin{j+1};
+   elseif strcmpi('frames_plot',varargin{j})
+       frames_use_manual = varargin{j+1};
    end
 end
 
@@ -115,8 +119,14 @@ catch
 end
 
 
+% Set frames to use for movie
+if isempty(frames_use_manual)
+    frames_use = 1:NumFrames;
+else
+    frames_use = frames_use_manual;
+end
 
-for i = 1:NumFrames
+for i = frames_use
     
     % load correct Plexon movie frame
     % calculate correct frame based on iteration and offsets
@@ -136,8 +146,8 @@ for i = 1:NumFrames
         return
     end
     % rescale the frame to [0 256]
-    frame(find(frame < clims(1))) = clims(1);
-    frame(find(frame > clims(2))) = clims(2);
+    frame(frame < clims(1)) = clims(1);
+    frame(frame > clims(2)) = clims(2);
     frame = frame-clims(1);
     %keyboard;
     frame = uint8(frame/(clims(2)-clims(1))*256);
@@ -190,15 +200,17 @@ for i = 1:NumFrames
     
     if video_type ~=2
         % for each active neuron
-        for j = an'
-            
-            if ((pval(j) > 0.95) & (nt(j) >= 3))
+        if plot_PF == 1 % don't plot PFs if flagged not to
+            for j = an'
                 
-                plot(xt{j},yt{j},'Color',colors(j,:),'LineWidth',5);
-                
+                if ((pval(j) > 0.95) && (nt(j) >= 3))
+                    
+                    plot(xt{j},yt{j},'Color',colors(j,:),'LineWidth',5);
+                    
+                end
             end
         end
-        end
+    end
     
     if video_type ~= 2
         % plot mouse marker
