@@ -8,6 +8,8 @@ function [ pval, pvalI, SpatialH ] = StrapIt(Trace,MovMap,Xbin,Ybin,cmperbin,goo
 
 suppress_output = 0;
 calc_mut_info = 0;
+NumShuffles = 500;
+
 for j = 1:length(varargin)
     if strcmpi('suppress_output',varargin{j})
        suppress_output = varargin{j+1};
@@ -15,14 +17,14 @@ for j = 1:length(varargin)
     if strcmpi('use_mut_info',varargin{j})
        calc_mut_info = varargin{j+1};
     end
-    
+    if strcmpi('NumShuffles',varargin{j})
+        NumShuffles = varargin{j+1};
+    end
 end
 
 if ~exist('toplot','var')
     toplot = 0;
 end
-
-NumShuffles = 500;
 
 % count the number of cell activations and their sizes
 
@@ -43,9 +45,9 @@ end
 % this in the future
 [placemap, ~, placemap_nosmooth] = calcmapdec(Trace, MovMap, Xbin, Ybin, isrunning, cmperbin);
 if suppress_output == 0
-    ExperimentalH = DaveEntropy(placemap)
+    ExperimentalH = DaveEntropy(placemap);
     if calc_mut_info == 1
-       ExperimentalI = calc_mutual_information(placemap_nosmooth,MovMap)
+       ExperimentalI = calc_mutual_information(placemap_nosmooth,MovMap);
     end
 elseif suppress_output == 1
     ExperimentalH = DaveEntropy(placemap);
