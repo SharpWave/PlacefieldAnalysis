@@ -84,7 +84,9 @@ for j = 1:length(varargin)
         alt_inputs = varargin{j+1};
     end
     if strcmpi('exclude_frames',varargin{j})
-        exclude_frames = varargin{j+1};
+        if ~isempty(exclude_frames)
+            exclude_frames = varargin{j+1};
+        end
     end
     if strcmpi('exclude_frames_raw',varargin{j})
         exclude_frames_raw = varargin{j+1};
@@ -233,13 +235,15 @@ if max(exclude_frames) > Flength
    exclude_frames = temp;
 end
 ind_use(exclude_frames) = zeros(1,length(exclude_frames)); % Send bad frames to zero
-half_validonly = find(cumsum(ind_use) == round(sum(ind_use)/2),1,'last'); % Get halfway point of valid indices
+half_validonly = find(cumsum(ind_use) == round(sum(ind_use)/2),1,'last'); % Get halfway point of valid indices - this is NOT right yet, needs to get start and end of valid indices too
 
-if calc_half == 1
-    ind_use_half{1}(1:half_validonly) = 1; %zeros(1,length(1:half)); % Get 1st half valid indices
-    ind_use_half{2}(half_validonly + 1:length(ind_use)) = 1; %zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
-elseif calc_half == 2
-    
+if calc_half == 1 % 1st half v 2nd half
+    ind_use_half{1}(1:half) = 1; %zeros(1,length(1:half)); % Get 1st half valid indices
+    ind_use_half{2}(half + 1:length(ind_use)) = 1; %zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
+elseif calc_half == 2 % odd v even minutes
+    [odd_ind, even_ind] = odd_v_even_minutes(1:length(ind_use),SR);
+    ind_use_half{1}(odd_ind) = 1;
+    ind_use_half{2}(even_ind) = 1;
 end
 % Use only frames that are not excluded in the session structure AND are
 % within the specified arena limits
@@ -350,7 +354,7 @@ for i = 1:NumNeurons
       RunOccMap, Xbin, Ybin, isrunning & frames_use_ind, cmperbin);
   [pval(i), pvalI(i),SpatialH(i)] = StrapIt(FT(i,:), RunOccMap, Xbin, Ybin, cmperbin, runepochs, isrunning & frames_use_ind,...
       0, 'suppress_output', progress_bar,'use_mut_info',use_mut_info,'NumShuffles',NumShuffles);
-  if calc_half == 1 % Calculate half-session TMaps and p-values
+  if calc_half == 1 || calc_half == 2 % Calculate half-session TMaps and p-values
       for j = 1:2
           [TMap_half(j).Tmap{i}, TMap_half(j).TMap_gauss{i}, TMap_half(j).TMap_unsmoothed{i}] = ...
               calcmapdec(FT(i,:), RunOccMap, Xbin, Ybin, isrunning & frames_use_ind_half{j}, cmperbin);
@@ -368,6 +372,7 @@ for i = 1:NumNeurons
   end
 end
 p.stop;
+
 
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
