@@ -68,7 +68,7 @@ pos_align_file = '';
 man_savename = [];
 use_unaligned_data = 0; % default
 alt_inputs = []; % default
-HalfWindow = 10;
+HalfWindow = 0; % default
 NumShuffles = 500; % default for running bootstrapping in StrapIt below
 for j = 1:length(varargin)
     if strcmpi('half_window',varargin{j})
@@ -95,7 +95,7 @@ for j = 1:length(varargin)
         rotate_to_std = varargin{j+1};
     end
     if strcmpi('name_append',varargin{j})
-        name_append = ['_' varargin{j+1}];
+        name_append = varargin{j+1};
     end
     if strcmpi('cmperbin',varargin{j})
        cmperbin = varargin{j+1};
@@ -204,7 +204,8 @@ Flength = length(x);
 if ~isempty(exclude_frames_raw)
     % take raw/non-aligned frame inidices that aligned with FT from
     % ProcOut.mat file and align to aligned position/FT data.
-    exclude_aligned = exclude_frames_raw - FToffset + 2;
+    load('Pos.mat','start_time');
+    exclude_aligned = exclude_frames_raw - FToffset + round(start_time*SR); % Account for offsets between a) AVI start time, b) imaging start time, and c) Mouse on Maze time
     exclude_aligned = exclude_aligned(exclude_aligned > 0); % Get rid of any negative values (corresponding to times before the mouse was on the maze)
     exclude_frames = [exclude_frames, exclude_aligned]; % concatenate to exclude_frames 
 end
