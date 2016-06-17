@@ -41,6 +41,7 @@ for j = 1:length(varargin)
    end
 end
 
+
 % Load appropriate PlaceMaps file
 if alt_file == 1
     load(alt_file_use)
