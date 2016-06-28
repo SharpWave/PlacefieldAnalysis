@@ -53,6 +53,7 @@ end
 load PlaceMaps.mat;
 load PFstats.mat;
 
+
 NumFrames = length(x);
 NumNeurons = length(NeuronImage);
 Xdim = size(NeuronImage{1},1);
