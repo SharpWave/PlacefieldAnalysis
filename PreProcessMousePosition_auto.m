@@ -194,6 +194,7 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
                 [DVTsec,~] = ginput(2); % DVTsec is start and end time in DVT seconds
                 sFrame = findclosest(time,DVTsec(1)); % index of start frame
                 eFrame = findclosest(time,DVTsec(2)); % index of end frame
+                eFrame = max(eFrame,time(end));
                 aviSR*sFrame;
                 
                 if (sFrame/aviSR > obj.Duration || eFrame/aviSR > obj.Duration)

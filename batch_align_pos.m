@@ -51,6 +51,10 @@ function [ ] = batch_align_pos(base_struct, reg_struct, varargin)
 %       save all data in Pos_align_trans.mat or
 %       Pos_align_std_corr_trans.mat.
 %
+%   halfwindow: half the temporal smoothing window used - mainly obsolete,
+%       but you may need to use if your data is offset for some reason.
+%       Default = 0.
+%
 % OUTPUTS (saved in Pos_align.mat in working directory, or Pos_align_std_corr.mat
 %          if you choose to auto-rotate back):
 %
@@ -86,6 +90,7 @@ ymin = 20; % where you want to set the minimum y-value
 
 name_append = ''; % default
 circ2square_use = 0; % default
+halfwindow = 0; % default for Tenaspis2, use 10 for Tenaspis1
 for j = 1:length(varargin)
    if strcmpi(varargin{j},'manual_rot_overwrite')
        manual_rot_overwrite = varargin{j+1};
@@ -109,6 +114,9 @@ for j = 1:length(varargin)
    if strcmpi(varargin{j},'circ2square_use')
       circ2square_use = varargin{j+1};
       name_append = '_trans';
+   end 
+   if strcmpi(varargin{j},'halfwindow')
+       halfwindow = varargin{j+1};
    end
 end
 
@@ -134,9 +142,18 @@ for j = 1: length(sesh)
         Pix2Cm = [];
         disp('Need room to get Pix2Cm')
     end
-    load('ProcOut.mat', 'FT')
-    % Align tracking and imaging
-    [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT);
+    
+    try 
+        load('T2output.mat','FT')
+        [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT,halfwindow);
+        disp(['Successfully loaded and aligned session ' num2str(j) ' with Tenaspis2 imaging data and halfwindow = ' num2str(halfwindow)])
+    catch
+        disp(['Failed to load T2 data for session ' num2str(j) '. Proceeding with Tenaspis v1 data using halfwindow = 10'])
+        halfwindow = 10;
+        load('ProcOut.mat', 'FT')
+        % Align tracking and imaging
+        [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT,halfwindow);
+    end
     
 %     % Transform circle data if indicated AND if in the square
 %     if circ2square_use == 1 && ~isempty(regexpi(sesh(j).Env,'octagon')) 
