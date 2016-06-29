@@ -339,6 +339,9 @@ RunSpeedMap = RunSpeedMap./RunOccMap;
 
 p = ProgressBar(NumNeurons);
 
+
+NumRunFrames = sum(isrunning & frames_use_ind);
+
 for i = 1:NumNeurons
   [TMap{i}, TMap_gauss{i}, TMap_unsmoothed{i}] = calcmapdec(FT(i,:), ...
       RunOccMap, Xbin, Ybin, isrunning & frames_use_ind, cmperbin);
@@ -355,7 +358,8 @@ for i = 1:NumNeurons
       TMap_half = [];
       pval_half = [];
   end
-  SpatialI(i) = Dave_MutInfo(PositionVector(find(isrunning)),NumXBins*NumYBins,FT(i,find(isrunning))+1,2);
+  
+  SpatialI(i) = SkaggsCaMutInfo(TMap_unsmoothed{i},RunOccMap,NumRunFrames);
   
   if progress_bar == 1
      p.progress; 

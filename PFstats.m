@@ -73,7 +73,7 @@ for i = 1:NumNeurons
         display(['calculating PF center for neuron ',int2str(i)]);
     end
     peakval = max(TMap{i}(:));
-    ThreshMap = TMap{i}.*(TMap{i} > peakval/tmap_thresh_denom);
+    ThreshMap = TMap_gauss{i}.*(TMap_gauss{i} > peakval/tmap_thresh_denom);
     BoolMap = ThreshMap > 0;
     b{i} = bwconncomp(BoolMap);
     r{i} = regionprops(b{i},'area','centroid');
