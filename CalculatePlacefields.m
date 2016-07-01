@@ -359,7 +359,7 @@ for i = 1:NumNeurons
       pval_half = [];
   end
   
-  SpatialI(i) = SkaggsCaMutInfo(TMap_unsmoothed{i},RunOccMap,NumRunFrames);
+  SpatialI(i) = SkaggsCaMutInfo(TMap_gauss{i},RunOccMap,NumRunFrames,cmperbin);
   
   if progress_bar == 1
      p.progress; 
@@ -386,7 +386,7 @@ save(save_name,'x', 'y', 't', 'xOutline', 'yOutline', 'speed','minspeed', ...
     'SpeedMap', 'RunSpeedMap', 'NeuronImage', 'NeuronPixels',...
     'cmperbin', 'pval', 'Xbin', 'Ybin', 'FToffset', 'FToffsetRear', 'isrunning',...
     'Xedges', 'Yedges','exclude_frames','aviFrame','TMap_half','pval_half',...
-    'pvalI','SpatialH','Pix2Cm','SpatialI','-v7.3'); 
+    'pvalI','SpatialH','Pix2Cm','SpatialI','frames_use_ind','-v7.3'); 
 
 output_filename = save_name;
 
