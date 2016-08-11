@@ -53,6 +53,11 @@ elseif alt_file == 0
     end
 end
 
+calc_half = false;
+if ~isempty(TMap_half)
+    calc_half = true;
+end
+
 % Which pixels are in place field?
 
 % what should the threshold be?  peaks range from .1 to .35
@@ -62,7 +67,7 @@ end
 NumNeurons = length(NeuronImage);
 NumFrames = length(Xbin);
 
-% some analysis using bwconncomp and regionprops
+%% some analysis using bwconncomp and regionprops
 disp('Calculating PF centers for all neurons')
 if progress_bar == 1
     p = ProgressBar(NumNeurons);
@@ -79,11 +84,25 @@ for i = 1:NumNeurons
     b{i} = bwconncomp(BoolMap);
     r{i} = regionprops(b{i},'area','centroid');
     
+    if calc_half
+       for n = 1:2
+           peakval = max(TMap_half(n).TMap_gauss{i}(:));
+           ThreshMap = TMap_half(n).TMap_gauss{i}.*(TMap_half(n).TMap_gauss{i} > peakval/tmap_thresh_denom);
+           BoolMap = ThreshMap > 0;
+           b_half{n}{i} = bwconncomp(BoolMap);
+           r_half{n}{i} = regionprops(b_half{n}{i},'area','centroid');
+       end
+    end
+    
 end
 if progress_bar == 1
     p.stop;
 end
 
+%%
+% keyboard
+
+%%
 disp('repackaging PF info for all neurons')
 if progress_bar == 1
     p = ProgressBar(NumNeurons);
@@ -95,17 +114,29 @@ for i = 1:NumNeurons
         display(['repackaging PF info for neuron ',int2str(i)])
     end
     
-    NumPF(i) = b{i}.NumObjects;
-    PFpixels{i,1} = [];
-    PFcentroid{i,1} = [];
-    PFsize(i,1) = 0;
-    MaxPF(i) = 0;
-    for j = 1:NumPF(i)
-        PFpixels{i,j} = b{i}.PixelIdxList{j};
-        PFsize(i,j) = r{i}(j).Area;
-        PFcentroid{i,j} = r{i}(j).Centroid;
+     nPF = b{i}.NumObjects;
+%     PFpixels{i,1} = [];
+%     PFcentroid{i,1} = [];
+%     PFsize(i,1) = 0;
+%     MaxPF(i) = 0;
+%     for j = 1:NumPF(i)
+%         PFpixels{i,j} = b{i}.PixelIdxList{j};
+%         PFsize(i,j) = r{i}(j).Area;
+%         PFcentroid{i,j} = r{i}(j).Centroid;
+%     end
+%     [~,MaxPF(i)] = max(PFsize(i,:));
+
+    [NumPF(i), PFpixels(i,1:nPF), PFcentroid(i,1:nPF), PFsize(i,1:nPF), MaxPF(i)] = repackage_info(b{i},r{i});
+
+    if calc_half
+        for n = 1:2
+            nPF = b_half{n}{i}.NumObjects;
+           [NumPF_half(i,n), PFpixels_half{n}(i,1:nPF), PFcentroid_half{n}(i,1:nPF),...
+               PFsize_half{n}(i,1:nPF), MaxPF_half(i,n)] = repackage_info(b_half{n}{i},r_half{n}{i}); 
+           
+        end
     end
-    [~,MaxPF(i)] = max(PFsize(i,:));
+
     % NK Question - should we calculate something similar for
     % firing/transient rate? e.g. if we have a cell with a very large field
     % that the cell only fires in once, but another, smaller field that the
@@ -117,6 +148,7 @@ if progress_bar == 1
     p.stop;
 end
 
+%%
 % for every place field, figure out how many times the mouse passed through
 % it
 
@@ -198,6 +230,23 @@ end
 save(save_name, 'PFpcthits', 'PFnumhits', 'PFactive', 'PFnumepochs', 'PFepochs',...
     'MaxPF', 'PFcentroid', 'PFsize', 'PFpixels', 'tmap_thresh_denom', '-v7.3');
 
+end
+
+function [NumPF, PFpixels, PFcentroid, PFsize, MaxPF] = repackage_info(b,r)
+
+NumPF = b.NumObjects;
+PFpixels{1,1} = [];
+PFcentroid{1,1} = [];
+PFsize(1,1) = 0;
+MaxPF(1) = 0;
+
+for j = 1:NumPF
+    PFpixels{1,j} = b.PixelIdxList{j};
+    PFsize(1,j) = r(j).Area;
+    PFcentroid{1,j} = r(j).Centroid;
+end
+[~,MaxPF] = max(PFsize);
+       
 end
 
 
