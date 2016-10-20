@@ -20,9 +20,17 @@ function [xpos_interp,ypos_interp,start_time,MoMtime,time_interp,AVItime_interp]
 %   suggest it because it tends to cause weird crashes when MATLAB can't
 %   figure out which figure it should actually be plotting to.
 %
-%   'epoch_length_lim': will not auto-correct any epochs over this length
+%   'epoch_length_lim' (optional): will not auto-correct any epochs over this length
 %   where the mouse is at 0,0 or above the velocity threhold - suggest
 %   using if the mouse is off the maze for a long time.
+%
+%   'ignore_zero' (optional): if true, will NOT try to auto-correct times when the
+%   rodent is at (0,0).
+%
+%   'on_off_maze' (optional): if followed by two vectors specifying when
+%   the rodent is put on the maze and when it is taken off, this will plot
+%   a green diamond for when the mouse is placed on the maze and a red
+%   diamond when he is taken off.
 %
 %   OUTPUTS (all saved in Pos.mat, along with some others)
 %   xpos_interp, ypos_interp: smoothed, corrected position data
@@ -40,6 +48,7 @@ close all;
 update_pos_realtime = 0; % Default setting
 epoch_length_lim = 200; % default
 on_off_maze = false; % default
+ignore_zero = false; % default
 for j = 1:length(varargin)
     if strcmpi('update_pos_realtime', varargin{j})
         update_pos_realtime = varargin{j+1};
@@ -51,6 +60,9 @@ for j = 1:length(varargin)
         on_off_maze = true;
         on_maze = varargin{j+1};
         off_maze = varargin{j+2};
+    end
+    if strcmpi('ignore_zero',varargin{j})
+       ignore_zero = varargin{j+1}; 
     end
 end
 
@@ -138,7 +150,11 @@ else
 end
 
 % start auto-correction of anything above threshold
-auto_frames = (Xpix == 0 | Ypix == 0 | vel_init > auto_vel_thresh) & time > MoMtime;
+if ~ignore_zero % include times at (0,0) in auto-correction
+    auto_frames = (Xpix == 0 | Ypix == 0 | vel_init > auto_vel_thresh) & time > MoMtime;
+elseif ignore_zero % exlude times at (0,0) from auto-correction
+    auto_frames = vel_init > auto_vel_thresh & time > MoMtime;
+end
 
 % Determine if auto thresholding applies
 if sum(auto_frames) > 0 && ~isnan(auto_thresh)
@@ -162,7 +178,17 @@ end
 
 figure(555);
 hx0 = subplot(4,3,1:3);plot(time,Xpix);xlabel('time (sec)');ylabel('x position (cm)');yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');axis tight;
+if on_off_maze
+    hold on;
+    plot(time(on_maze),Xpix(on_maze),'gd', time(off_maze),Xpix(off_maze),'rd');
+    hold off;
+end
 hy0 = subplot(4,3,4:6);plot(time,Ypix);xlabel('time (sec)');ylabel('y position (cm)');yl = get(gca,'YLim');line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');axis tight;
+if on_off_maze
+    hold on;
+    plot(time(on_maze),Ypix(on_maze),'gd', time(off_maze),Ypix(off_maze),'rd');
+    hold off;
+end
 linkaxes([hx0 hy0],'x');
 
 v0 = readFrame(obj);
@@ -366,12 +392,22 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
         xlabel('time (sec)'); ylabel('x position (cm)');
         hold on; yl = get(gca,'YLim'); line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
         hold off; axis tight; % set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hx = gca;
+        if on_off_maze
+            hold on;
+            plot(time(on_maze),Xpix(on_maze),'gd', time(off_maze),Xpix(off_maze),'rd');
+            hold off;
+        end
         
         hy = subplot(4,3,4:6); plot(time,Ypix); hold on;
         plot(time([sFrame eFrame]),Ypix([sFrame eFrame]),'ro'); % plot start and end points of last edit
         xlabel('time (sec)'); ylabel('y position (cm)');
         hold on; yl = get(gca,'YLim'); line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
         hold off; axis tight; % set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hy = gca;
+        if on_off_maze
+            hold on;
+            plot(time(on_maze),Ypix(on_maze),'gd', time(off_maze),Ypix(off_maze),'rd');
+            hold off;
+        end
         
         linkaxes([hx, hy, hv],'x'); % Link axes zooms along time dimension together
         
@@ -480,8 +516,9 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
             hold on;plot(xAVI(sFrame+i*2),yAVI(sFrame+i*2),marker{marker_fr(i)},'MarkerSize',4);
             
             %Correct frames here!
-            [xm,ym] = ginput(1);
+            [xm,ym, button] = ginput(1);
             
+            if button == 1
             % apply corrected position to current frame
             xAVI(sFrame+i*2) = xm;
             yAVI(sFrame+i*2) = ym;
@@ -494,9 +531,16 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
             Xpix(sFrame+i*2-1) = ceil(xAVI(sFrame+i*2-1)/0.6246);
             Ypix(sFrame+i*2-1) = ceil(yAVI(sFrame+i*2-1)/0.6246);
             
-            
             % plot marker
             plot(xm,ym,marker{marker_fr(i)},'MarkerSize',4,'MarkerFaceColor',marker_face{marker_fr(i)});hold off;
+            
+            elseif button == 3 % if right click is detected, apply that position to ALL subsequent frames (good if you know the mouse will stay in that position
+                xAVI(sFrame+i:eFrame) = xm;
+                yAVI(sFrame+i:eFrame) = ym;
+                Xpix(sFrame+i:eFrame) = ceil(xm/0.6246);
+                Ypix(sFrame+i:eFrame) = ceil(ym/0.6246);
+                break % exit for loop
+            end
         end
         disp(['You just edited from ' num2str(edit_start_time) ...
             ' sec to ' num2str(edit_end_time) ' sec.']);
