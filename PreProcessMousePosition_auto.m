@@ -39,6 +39,7 @@ close all;
 
 update_pos_realtime = 0; % Default setting
 epoch_length_lim = 200; % default
+on_off_maze = false; % default
 for j = 1:length(varargin)
     if strcmpi('update_pos_realtime', varargin{j})
         update_pos_realtime = varargin{j+1};
@@ -46,7 +47,11 @@ for j = 1:length(varargin)
     if strcmpi('epoch_length_lim', varargin{j})
         epoch_length_lim = varargin{j+1};
     end
-    
+    if strcmpi('on_off_maze',varargin{j})
+        on_off_maze = true;
+        on_maze = varargin{j+1};
+        off_maze = varargin{j+2};
+    end
 end
 
 %%
@@ -523,12 +528,22 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
         xlabel('time (sec)'); ylabel('x position (cm)');
         hold on; yl = get(gca,'YLim'); line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
         hold off; axis tight; % set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hx = gca;
+        if on_off_maze
+            hold on;
+            plot(time(on_maze),Xpix(on_maze),'gd', time(off_maze),Xpix(off_maze),'rd');
+            hold off;
+        end
         
         hy = subplot(4,3,4:6); plot(time,Ypix); hold on;
         plot(time([sFrame eFrame]),Ypix([sFrame eFrame]),'ro'); % plot start and end points of last edit
         xlabel('time (sec)'); ylabel('y position (cm)');
         hold on; yl = get(gca,'YLim'); line([MoMtime MoMtime], [yl(1) yl(2)],'Color','r');
         hold off; axis tight; % set(gca,'XLim',[sFrame/aviSR eFrame/aviSR]); hy = gca;
+        if on_off_maze
+            hold on;
+            plot(time(on_maze),Ypix(on_maze),'gd', time(off_maze),Ypix(off_maze),'rd');
+            hold off;
+        end
         
         linkaxes([hx, hy, hv],'x'); % Link axes zooms along time dimension together
         
