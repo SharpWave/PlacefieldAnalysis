@@ -52,9 +52,12 @@ NumUsed,
 tempv = tempv./NumUsed;
 load allv.mat;
 figure;image(uint8(tempv));axis image;
-a = allv-tempv;
+a = (allv-tempv)./allv;
 b = sum(a,3);
 imagesc(b);axis image;axis off;
-caxis([median(b(:)) max(b(:))])
 
+s = sort(b(:));
+
+caxis([median(b(:)) s(round(0.99*length(s)))]);
+set(gcf,'Position',[534 72 1171 921]);
 end
