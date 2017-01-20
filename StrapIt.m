@@ -58,7 +58,7 @@ end
     
 
 runlengths = goodepochs(:,2)-goodepochs(:,1)+1;
-runused = zeros(size(runlengths));
+% runused = zeros(size(runlengths));
 
 parfor i = 1:NumShuffles
     
