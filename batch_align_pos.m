@@ -73,6 +73,10 @@ function [ ] = batch_align_pos(base_struct, reg_struct, varargin)
 % NOTE: this may not work well for the 2 environment experiment since it
 % does not account for any fish-eye distortions of the maze...should be
 % good for most comparisons between the same mazes, however
+%
+% NEXT STEP: make this capable of taking an existing session as the
+% reference and NOT re-writing it if it already has a pos_align file!!! -
+% instead, spit out the box used on top of the existing data!!!
 
 close all
 
