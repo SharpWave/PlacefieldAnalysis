@@ -156,7 +156,7 @@ else
 end
 
 for i = 1:NumNeurons
-    temp = bwboundaries(NeuronImage{i});
+    temp = bwboundaries(NeuronImage{i},'noholes');
     yOutline{i} = temp{1}(:,1);
     xOutline{i} = temp{1}(:,2);
 end
