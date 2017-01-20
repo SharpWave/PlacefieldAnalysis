@@ -22,7 +22,8 @@ function [TMap, TMap_gauss, TMap_unsmoothed] = calcmapdec(trace,occmap,Xbin,Ybin
 %% Smoothing variables and others
 disk_rad = 4; % cm
 gauss_std = 2.5; % cm
-plot_filters = 0;
+plot_filters = 0; % default - don't plot anything
+calc_disk_only = false; % default - calculcates both disk and gaussian filtered map
 for j = 1:length(varargin)
    if strcmpi('disk_rad',varargin{j})
        disk_rad = varargin{j+1};
@@ -32,6 +33,9 @@ for j = 1:length(varargin)
    end
    if strcmpi('plot_filters',varargin{j})
        plot_filters = varargin{j+1};
+   end
+   if strcmpi('calc_disk_only',varargin{j})
+       calc_disk_only = varargin{j+1};
    end
 end
 
@@ -50,13 +54,15 @@ for j = 1:Flength
 end
 
 TMap = TMap./occmap; % Get Transient rate map
-TMap(find(isnan(TMap))) = 0; % Set NaNs to zero
+TMap(isnan(TMap)) = 0; % Set NaNs to zero
 TMap_unsmoothed = TMap; % Save unsmoothed TMap
 TMap2 = TMap; % Save copy for gaussian smoothing
 Tsum = sum(TMap(:));
 
 % Filter specifications
-sm_gauss = fspecial('gaussian',[round(8*gauss_std,0), round(8*gauss_std,0)],gauss_std);
+if ~calc_disk_only
+    sm_gauss = fspecial('gaussian',[round(8*gauss_std,0), round(8*gauss_std,0)],gauss_std);
+end
 sm = fspecial('disk',disk_rad);
 
 %%%  FOR REFERENCE %%%
@@ -75,10 +81,13 @@ sm = fspecial('disk',disk_rad);
 %%% END REFERENCE %%%
 
 TMap = imfilter(TMap,sm); % Apply disk filter
-TMap_gauss = imfilter(TMap2,sm_gauss); % Apply gaussian filter
-
 TMap = TMap.*Tsum./sum(TMap(:)); % keep sum the same
-TMap_gauss = TMap_gauss.*Tsum./sum(TMap_gauss(:)); % keep sum the same
+if calc_disk_only
+    TMap_gauss = nan(size(TMap));
+elseif ~calc_disk_only
+    TMap_gauss = imfilter(TMap2,sm_gauss); % Apply gaussian filter
+    TMap_gauss = TMap_gauss.*Tsum./sum(TMap_gauss(:)); % keep sum the same
+end
 
 %% Plotting for troubleshooting
 
