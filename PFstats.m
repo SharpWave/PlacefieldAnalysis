@@ -54,9 +54,9 @@ elseif alt_file == 0
 end
 
 calc_half = false;
-if ~isempty(TMap_half)
-    calc_half = true;
-end
+% if ~isempty(TMap_half) 
+%     calc_half = true;
+% end
 
 % Which pixels are in place field?
 
