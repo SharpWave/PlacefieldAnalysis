@@ -52,7 +52,12 @@ function [output_filename] = CalculatePlacefields(RoomStr,varargin)
 %
 %       -'use_unaligned_data': use Pos.mat file in lieu of Pos_align files
 %       (default is to use aligned data!)
-close all;
+close all
+
+%% Process varargins
+
+p = inputParser;
+p.addRequired(session_struct)
 
 progress_bar = 1;
 exclude_frames = [];
