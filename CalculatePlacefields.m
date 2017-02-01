@@ -67,7 +67,7 @@ pos_align_file = '';
 man_savename = [];
 use_unaligned_data = 0; % default
 alt_inputs = []; % default
-HalfWindow = 10;
+HalfWindow = 0;
 NumShuffles = 500; % default for running bootstrapping in StrapIt below
 for j = 1:length(varargin)
     if strcmpi('half_window',varargin{j})
@@ -123,7 +123,8 @@ if (~isempty(alt_inputs))
     display('using user-specified neuronal activity');
     load(alt_inputs,'NeuronImage','NeuronPixelIdxList','PSAbool');
 else
-    load ('ProcOut.mat','NeuronImage','NeuronPixels','FT');
+    load('FinalOutput.mat','NeuronImage','NeuronPixelIdxList','PSAbool');
+    disp('Using FinalOutput.mat');
 end
 NeuronPixels = NeuronPixelIdxList;
 FT = PSAbool;
@@ -294,7 +295,7 @@ axis tight;
 Xbin(find(Xbin == (NumXBins+1))) = NumXBins;
 Ybin(find(Ybin == (NumYBins+1))) = NumYBins;
 
-Xbin(find(Xbin == 0)) = 1;
+Xbin(find(Xbin == 0)) = 1; % This might be doing something funky... should set to inf or something not 1.
 Ybin(find(Ybin == 0)) = 1;
 
 PositionVector = sub2ind([NumXBins,NumYBins],Xbin,Ybin);
