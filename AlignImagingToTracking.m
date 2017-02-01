@@ -1,4 +1,4 @@
-function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow)
+function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 SR = 20;
@@ -11,9 +11,15 @@ try
     load Pos.mat
     x = xpos_interp;
     y = ypos_interp;
+    if ~exist('nframesinserted','var') % Backward's compatibility fix
+        disp('IMPORTANT - Cineplex dropped frame analysis not found in Pos.mat.')
+        disp('Check with PreProcessMousePosition_auto to ensure your data is properly aligned!')
+        nframesinserted = nan;
+    end
 catch
     vidFile = dir('*.DVT');
-    [xpos_interp,ypos_interp,start_time,MoMtime,time_interp,AVItime_interp] = PreProcessMousePosition_auto(vidFile.name);
+    [xpos_interp,ypos_interp,start_time,MoMtime,time_interp,AVItime_interp,nframesinserted]...
+        = PreProcessMousePosition_auto(vidFile.name);
 end
 
 x = xpos_interp;
@@ -35,10 +41,10 @@ plexTime = (0:length(x)-1)/SR+start_time;
 pStart = findclosest(MoMtime,plexTime);
 x = x(pStart:end);
 y = y(pStart:end);
-time_interp = time_interp(pStart:end); 
+time_interp = time_interp(pStart:end);          %time_interp starts when mouse is on maze. 
 
 if exist('AVItime_interp','var')
-    aviFrame = AVItime_interp(pStart:end);
+    aviFrame = AVItime_interp(pStart:end);      %aviFrame starts from beginning of AVI. 
 else
     aviFrame = 1:size(FT,2);
     disp('aviFrame not found in Pos.mat.  Faking for now')
