@@ -6,7 +6,9 @@ function batch_align_pos(base_struct, reg_struct, varargin)
 % between firing across sessions.  Everything gets scaled to the
 % trajectory/occupancy from the base session. IMPORTANT NOTE: running this
 % WILL overwrite any previous Pos_align.mat files, so be careful (though
-% not too careful since using this function is fairly quick)
+% not too careful since using this function is fairly quick). Note that
+% this also aligns the position data to the imaging data found in
+% FinalOutput.mat.
 %
 % INPUTS: 
 %   base_struct & reg_struct:
@@ -65,7 +67,8 @@ function batch_align_pos(base_struct, reg_struct, varargin)
 %   that can be sent to CalculatePlacefields such that the occupancy maps,
 %   heat maps, etc. are all identical in size
 %
-%   'speed','FT','FToffset','FToffsetRear': calculated from  
+%   'speed','FT','FToffset','FToffsetRear': calculated from
+%   AlignImagingToTracking
 %    
 %   'base_struct':
 %   'sessions_included':
@@ -84,7 +87,7 @@ p.addRequired('base_struct',@(x) isstruct(x));
 p.addRequired('reg_struct',@(x) isstruct(x)); 
 p.addParameter('manual_rot_overwrite',true,@(x) islogical(x));
 p.addParameter('ratio_use',0.95,@(x) isscalar(x)); 
-p.addParameter('auto_rotate_to_std',false,@(x) islogical(x)); 
+p.addParameter('auto_rotate_to_std',false,@(x) islogical(x) || x == 0 || x == 1); 
 p.addParameter('manual_limits',zeros(1,length(reg_struct)+1),@(x) islogical(x));
 p.addParameter('name_append','',@(x) ischar(x)); 
 p.addParameter('circ2square_use',false,@(x) islogical(x)); 
