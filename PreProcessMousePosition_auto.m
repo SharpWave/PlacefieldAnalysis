@@ -80,9 +80,9 @@ Ypix = pos_data.data(:,7);
 time = pos_data.data(:,4);
 end
 
-%WM Edit: Check for correct Cineplex sampling rate. 
+%WM Edit: Check for correct Cineplex sampling rate 
 dt = [0.03; round(diff(time),2)]; 
-bad = dt~=0.03; 
+bad = dt > 0.06; % Look for anything close to or greater than 2x the sampling rate 
 bad_time = time;
 cum_l = 0;
 if any(bad)
