@@ -202,7 +202,7 @@ Flength = length(x);
 %% Adjust exclude_frames_raw if applicable
 
 if ~isempty(exclude_frames_raw)
-    % take raw/non-aligned frame inidices that aligned with FT from
+    % take raw/non-aligned frame inidices that are aligned with FT from
     % ProcOut.mat file and align to aligned position/FT data.
     exclude_aligned = exclude_frames_raw - FToffset + 2;
     exclude_aligned = exclude_aligned(exclude_aligned > 0); % Get rid of any negative values (corresponding to times before the mouse was on the maze)
