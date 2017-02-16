@@ -46,7 +46,8 @@ function batch_align_pos(base_struct, reg_struct, varargin)
 %       not the base session or 2nd registered session)
 %
 %       name_append: this will be appended to the Pos_align or
-%       Pos_align_std_corr if you specify it
+%       Pos_align_std_corr if you specify it.  Can also be a cell with
+%       different names to append for each session
 %
 %       circ2square_use: logical with 1 indicating to use circle data
 %       that has been transformed to square data (in Pos_trans.mat).  Will
@@ -82,6 +83,12 @@ global MasterDirectory;
 MasterDirectory = 'C:\MasterData';
 
 %% Parameters/default values
+% Dump everything into one structure for future ease
+base_struct = complete_struct(base_struct);
+reg_struct = complete_struct(reg_struct);
+sesh = [base_struct, reg_struct];
+num_sessions = length(sesh);
+
 p = inputParser;
 p.addRequired('base_struct',@(x) isstruct(x));
 p.addRequired('reg_struct',@(x) isstruct(x)); 
@@ -89,9 +96,13 @@ p.addParameter('manual_rot_overwrite',true,@(x) islogical(x));
 p.addParameter('ratio_use',0.95,@(x) isscalar(x)); 
 p.addParameter('auto_rotate_to_std',false,@(x) islogical(x) || x == 0 || x == 1); 
 p.addParameter('manual_limits',zeros(1,length(reg_struct)+1),@(x) islogical(x));
-p.addParameter('name_append','',@(x) ischar(x)); 
-p.addParameter('circ2square_use',false,@(x) islogical(x)); 
-p.addParameter('TenaspisVer',4,@(x) isscalar(x) & x>2); 
+p.addParameter('name_append','', @(x) ischar(x) || iscell(x)); 
+p.addParameter('circ2square_use',false, @(x) islogical(x)); 
+p.addParameter('TenaspisVer',4 ,@(x) isscalar(x) && x >= 3); 
+p.addParameter('rotate_data', zeros(1,num_sessions), @(a) isnumeric(a) && length(a) == num_sessions)
+p.addParameter('skip_skew_fix', false, @islogical);
+p.addParameter('suppress_output', false, @islogical);
+p.addParameter('skip_trace_align', false, @islogical);
 
 p.parse(base_struct,reg_struct,varargin{:});
 manual_rot_overwrite = p.Results.manual_rot_overwrite;
@@ -101,34 +112,46 @@ manual_limits = p.Results.manual_limits;
 name_append = p.Results.name_append;
 circ2square_use = p.Results.circ2square_use;
 TenaspisVer = p.Results.TenaspisVer;
-xmin = 10; ymin = 20;
+rotate_data = p.Results.rotate_data;
+skip_skew_fix = p.Results.skip_skew_fix;
+suppress_output = p.Results.suppress_output;
+skip_trace_align = p.Results.skip_trace_align;
+xmin = 10; ymin = 20; % Arbitrary point of reference
 
+% Make name_append a cell
+if ~iscell(name_append)
+   temp = {name_append};
+   clear name_append
+   name_append = repmat(temp, 1, num_sessions);
+end
+
+curr_dir = cd;
 %% 1: Load all sessions, and align to imaging data
-
-% Dump everything into one structure for future ease
-base_struct = complete_struct(base_struct);
-reg_struct = complete_struct(reg_struct);
-
-sesh = [base_struct, reg_struct];
-
-for j = 1: length(sesh)
+pb = ProgressBar(num_sessions);
+for j = 1:num_sessions
     cd(sesh(j).Location);
-    Pix2Cm = sesh(j).Pix2CM; 
-    disp(['Using ', num2str(Pix2Cm), ' as Pix2CM for ', sesh(j).Date, ' session ', num2str(sesh(j).Session)]);
+    Pix2Cm = sesh(j).Pix2CM;
+    if ~suppress_output
+        disp(['Using ', num2str(Pix2Cm), ' as Pix2CM for ', sesh(j).Date, ' session ', num2str(sesh(j).Session)]);
+    end
     
     if TenaspisVer==4
-        disp('Loading results from Tenaspis v4.');
+        if ~suppress_output
+            disp('Loading results from Tenaspis v4.');
+        end
         HalfWindow = 0;
-        load(fullfile(pwd,'FinalOutput.mat'),'PSAbool','NeuronTraces');  
+        load(fullfile(sesh(j).Location,'FinalOutput.mat'),'PSAbool','NeuronTraces');  
         LPtrace = NeuronTraces.LPtrace;
         DFDTtrace = NeuronTraces.DFDTtrace; 
         RawTrace = NeuronTraces.RawTrace;
         clear NeuronTraces;
     elseif TenaspisVer==3
-        disp('Loading results from Tenaspis v3.');
+        if ~suppress_output
+            disp('Loading results from Tenaspis v3.');
+        end
         HalfWindow = 0;
-        load(fullfile(pwd,'FinalOutput.mat'),'FT');
-        load(fullfile(pwd,'FinalTraces.mat'),'trace','difftrace','rawtrace');
+        load(fullfile(sesh(j).Location,'FinalOutput.mat'),'FT');
+        load(fullfile(sesh(j).Location,'FinalTraces.mat'),'trace','difftrace','rawtrace');
         PSAbool = FT;
         LPtrace = trace;
         DFDTtrace = difftrace; 
@@ -138,10 +161,17 @@ for j = 1: length(sesh)
     
     % Align tracking and imaging
     [x,y,speed,PSAbool,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = ...
-        AlignImagingToTracking(Pix2Cm,PSAbool,HalfWindow);
-    [~,~,~,LPtrace] = AlignImagingToTracking(Pix2Cm,LPtrace,HalfWindow);
-    [~,~,~,DFDTtrace] = AlignImagingToTracking(Pix2Cm,DFDTtrace,HalfWindow);
-    [~,~,~,RawTrace] = AlignImagingToTracking(Pix2Cm,RawTrace,HalfWindow);
+        AlignImagingToTracking(Pix2Cm,PSAbool,HalfWindow, 'suppress_output', suppress_output);
+    if ~skip_trace_align
+        [~,~,~,LPtrace] = AlignImagingToTracking(Pix2Cm,LPtrace,HalfWindow, 'suppress_output', suppress_output);
+        [~,~,~,DFDTtrace] = AlignImagingToTracking(Pix2Cm,DFDTtrace,HalfWindow, 'suppress_output', suppress_output);
+        [~,~,~,RawTrace] = AlignImagingToTracking(Pix2Cm,RawTrace,HalfWindow, 'suppress_output', suppress_output);
+    elseif skip_trace_align
+        LPtrace = 'not performed';
+        DFDTtrace = 'not performed';
+        RawTrace = 'not performed';
+    end
+        
     
 %     % Transform circle data if indicated AND if in the square
 %     if circ2square_use == 1 && ~isempty(regexpi(sesh(j).Env,'octagon')) 
@@ -152,6 +182,10 @@ for j = 1: length(sesh)
     if auto_rotate_to_std == 1
         rot_corr = get_rot_from_db(sesh(j));
         [x, y] = rotate_arena(x,y,rot_corr);
+    end
+    
+    if rotate_data(j) ~= 0
+        [x, y] = rotate_arena(x,y,rotate_data(j));
     end
     
     sesh(j).x = x;
@@ -165,12 +199,18 @@ for j = 1: length(sesh)
     sesh(j).FToffsetRear = FToffsetRear;
     
     % Fix day-to-day mis-alignments in rotation of the maze
-    skewed = true;
-    while skewed
-        [rot_x,rot_y,rot_ang] = rotate_traj(x,y);
-        plot(rot_x,rot_y);
-        satisfied = input('Are you satisfied with the rotation? Enter y or n-->','s');
-        skewed = ~strcmp(satisfied,'y');
+    if ~skip_skew_fix
+        skewed = true;
+        while skewed
+            [rot_x,rot_y,rot_ang] = rotate_traj(x,y);
+            plot(rot_x,rot_y);
+            satisfied = input('Are you satisfied with the rotation? Enter y or n-->','s');
+            skewed = ~strcmp(satisfied,'y');
+        end
+    elseif skip_skew_fix
+        rot_x = x;
+        rot_y = y;
+        rot_ang = 'skipped';
     end
         
     sesh(j).rot_x = rot_x;
@@ -179,7 +219,11 @@ for j = 1: length(sesh)
     sesh(j).aviFrame = aviFrame;
     sesh(j).time_interp = time_interp;
     sesh(j).nframesinserted = nframesinserted;
+    
+    pb.progress;
 end
+
+pb.stop;
 
 
 %% 2: Align position data for each session to the base session by using the 95% occupancy limits, save as Pos_align.mat
@@ -189,6 +233,7 @@ end
 % flag you set for it is 1 - may want to do this by looking at the Notes
 % section in MD
 
+
 for j = 1:length(sesh)
     
     if ~manual_limits(j)
@@ -197,7 +242,7 @@ for j = 1:length(sesh)
         sesh(j).ind_keep = true(1,length(sesh(j).rot_x));
     elseif manual_limits(j)
         [x_for_limits, y_for_limits, sesh(j).ind_keep] = draw_manual_limits(...
-            sesh(j).rot_x, sesh(j).rot_y);
+            sesh(j).rot_x, sesh(j).rot_y, sesh(j).Env);
     end
     
     % Transform circle to square if indicated
@@ -272,7 +317,7 @@ for j = 1:length(sesh)
     time_interp = sesh(j).time_interp;
     nframesinserted = sesh(j).nframesinserted;
     if ~auto_rotate_to_std
-    save(fullfile(sesh(j).Location,['Pos_align' name_append '.mat']),...
+    save(fullfile(sesh(j).Location,['Pos_align' name_append{j} '.mat']),...
         'x_adj_cm','y_adj_cm','xmin','xmax','ymin','ymax','speed',...
         'PSAbool','LPtrace','DFDTtrace','RawTrace','FToffset',...
         'nframesinserted','time_interp','FToffsetRear','aviFrame',...
@@ -280,7 +325,7 @@ for j = 1:length(sesh)
     elseif auto_rotate_to_std
         % finish here - save as a different filename?
         save(fullfile(sesh(j).Location,...
-            ['Pos_align_std_corr' name_append '.mat']),'x_adj_cm',...
+            ['Pos_align_std_corr' name_append{j} '.mat']),'x_adj_cm',...
             'y_adj_cm','xmin','xmax','ymin','ymax','speed','PSAbool',...
             'LPtrace','DFDTtrace','RawTrace','FToffset','nframesinserted',...
             'time_interp','FToffsetRear','aviFrame','base_struct',...
