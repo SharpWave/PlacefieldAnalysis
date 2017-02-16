@@ -1,19 +1,32 @@
-function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow)
+function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow, varargin)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
+
+p = inputParser;
+p.addRequired('Pix2CM', @isnumeric);
+p.addRequired('FT', @(a) isnumeric(a) || islogical(a));
+p.addOptional('HalfWindow',0, @(a) round(a) == a && a >= 0);
+p.addParameter('suppress_output',false, @islogical);
+p.parse(Pix2Cm, FT, HalfWindow, varargin{:});
+
+HalfWindow = p.Results.HalfWindow;
+suppress_output = p.Results.suppress_output;
+
 SR = 20;
 
-if ~exist('HalfWindow','var')
-    HalfWindow = 10;
-end
+% if ~exist('HalfWindow','var')
+%     HalfWindow = 10;
+% end
 
 try
     load Pos.mat
     x = xpos_interp;
     y = ypos_interp;
-    if ~exist('nframesinserted','var') % Backward's compatibility fix
-        disp('IMPORTANT - Cineplex dropped frame analysis not found in Pos.mat.')
-        disp('Check with PreProcessMousePosition_auto to ensure your data is properly aligned!')
+    if ~exist('nframesinserted','var') % Backward's compatibility fix/notification
+        if ~suppress_output
+            disp('IMPORTANT - Cineplex dropped frame analysis not found in Pos.mat.')
+            disp('Check with PreProcessMousePosition_auto to ensure your data is properly aligned!')
+        end
         nframesinserted = nan;
     end
 catch
@@ -47,7 +60,9 @@ if exist('AVItime_interp','var')
     aviFrame = AVItime_interp(pStart:end);      %aviFrame starts from beginning of AVI. 
 else
     aviFrame = 1:size(FT,2);
-    disp('aviFrame not found in Pos.mat.  Faking for now')
+    if ~suppress_output
+        disp('aviFrame not found in Pos.mat.  Faking for now')
+    end
 end
 
 speed = speed(pStart:end);
