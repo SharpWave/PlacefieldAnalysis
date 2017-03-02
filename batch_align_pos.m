@@ -95,7 +95,7 @@ p.addRequired('reg_struct',@(x) isstruct(x));
 p.addParameter('manual_rot_overwrite',true,@(x) islogical(x));
 p.addParameter('ratio_use',0.95,@(x) isscalar(x)); 
 p.addParameter('auto_rotate_to_std',false,@(x) islogical(x) || x == 0 || x == 1); 
-p.addParameter('manual_limits',zeros(1,length(reg_struct)+1),@(x) islogical(x));
+p.addParameter('manual_limits',zeros(1,length(reg_struct)+1),@(x) islogical(x) && length(x) == length(reg_struct)+1);
 p.addParameter('name_append','', @(x) ischar(x) || iscell(x)); 
 p.addParameter('circ2square_use',false, @(x) islogical(x)); 
 p.addParameter('TenaspisVer',4 ,@(x) isscalar(x) && x >= 3); 
@@ -103,6 +103,7 @@ p.addParameter('rotate_data', zeros(1,num_sessions), @(a) isnumeric(a) && length
 p.addParameter('skip_skew_fix', false, @islogical);
 p.addParameter('suppress_output', false, @islogical);
 p.addParameter('skip_trace_align', false, @islogical);
+p.addParameter('base_adjust', true, @islogical); % Set to false if you want to incorporate new sessions into previously aligned ones - will leave base session alone.
 
 p.parse(base_struct,reg_struct,varargin{:});
 manual_rot_overwrite = p.Results.manual_rot_overwrite;
@@ -116,13 +117,21 @@ rotate_data = p.Results.rotate_data;
 skip_skew_fix = p.Results.skip_skew_fix;
 suppress_output = p.Results.suppress_output;
 skip_trace_align = p.Results.skip_trace_align;
-xmin = 10; ymin = 20; % Arbitrary point of reference
+base_adjust = p.Results.base_adjust;
+xmin = 10; ymin = 20; % Arbitrary point of reference - %%% NRK - need to adjust this for base_adjust = false - find95% and 95% limits of base data and adjust!!! 
 
 % Make name_append a cell
 if ~iscell(name_append)
    temp = {name_append};
    clear name_append
    name_append = repmat(temp, 1, num_sessions);
+end
+
+if base_adjust
+    start_sesh = 1;
+elseif ~base_adjust
+    start_sesh = 2;
+    base_align_file = fullfile(sesh(1).Location,['Pos_align' name_append{1} '.mat']);
 end
 
 curr_dir = cd;
@@ -281,9 +290,21 @@ for j = 1:length(sesh)
     % Linearly adjust all the coordinates to match - use all position data!
     sesh(j).x_adj = (sesh(j).rot_x - xbound{j}(1))/span_x_ratio + xmin;
     sesh(j).y_adj = (sesh(j).rot_y - ybound{j}(1))/span_y_ratio + ymin; 
+    
+    % Adjust xmin and ymin if adding in new data to existing aligned
+    % sessions(s).
+    if j == 1 && ~base_adjust %% NRK - check here!
+       load(base_align_file,'x_adj_cm', 'y_adj_cm');
+       xmin = xmin + min(x_adj_cm) - min(sesh(1).x_adj);
+       ymin = ymin + min(y_adj_cm) - min(sesh(1).y_adj);
+       
+       sesh(1).x_adj = x_adj_cm;
+       sesh(1).y_adj = y_adj_cm;
+    end
+   
 end
-%% 4: Concatenate ALL position data into one X and one Y vector, and get Xedges and Yedges based on this
 
+%% 4: Concatenate ALL position data into one X and one Y vector, and get Xedges and Yedges based on this
 x_all = [];
 y_all = [];
 for j = 1:length(sesh)
@@ -293,17 +314,23 @@ end
 
 %% 5: Get xmin, xmax, ymin, and ymax
 
-xmax = max(x_all);
-xmin = min(x_all);
-ymax = max(y_all);
-ymin = min(y_all);
+if base_adjust
+    xmax = max(x_all)+1; % give yourself a buffer of 1 cm on each side just in case you want to align future sessions
+    xmin = min(x_all)-1;
+    ymax = max(y_all)+1;
+    ymin = min(y_all)-1;
+elseif ~base_adjust % Set limits to those from base session if not adjusting the base session.
+    load(base_align_file,'xmin', 'xmax', 'ymin', 'ymax');
+end
+
+keyboard
 
 %% 6: Save Xedges, Yedges in base session for future reference along with all sessions aligned to it.
 % Also save adjusted position data for future use...
 
 sessions_included = [base_struct reg_struct];
 
-for j = 1:length(sesh)
+for j = start_sesh:length(sesh)
     x_adj_cm = sesh(j).x_adj;
     y_adj_cm = sesh(j).y_adj;
     speed = sesh(j).speed;
@@ -316,12 +343,13 @@ for j = 1:length(sesh)
     aviFrame = sesh(j).aviFrame;
     time_interp = sesh(j).time_interp;
     nframesinserted = sesh(j).nframesinserted;
+    Pix2CM = sesh(j).Pix2CM;
     if ~auto_rotate_to_std
     save(fullfile(sesh(j).Location,['Pos_align' name_append{j} '.mat']),...
         'x_adj_cm','y_adj_cm','xmin','xmax','ymin','ymax','speed',...
         'PSAbool','LPtrace','DFDTtrace','RawTrace','FToffset',...
         'nframesinserted','time_interp','FToffsetRear','aviFrame',...
-        'base_struct','sessions_included','auto_rotate_to_std');
+        'base_struct','sessions_included','auto_rotate_to_std', 'Pix2CM');
     elseif auto_rotate_to_std
         % finish here - save as a different filename?
         save(fullfile(sesh(j).Location,...
@@ -329,12 +357,12 @@ for j = 1:length(sesh)
             'y_adj_cm','xmin','xmax','ymin','ymax','speed','PSAbool',...
             'LPtrace','DFDTtrace','RawTrace','FToffset','nframesinserted',...
             'time_interp','FToffsetRear','aviFrame','base_struct',...
-            'sessions_included', 'auto_rotate_to_std');
+            'sessions_included', 'auto_rotate_to_std', 'Pix2CM');
     end
 end
 
 %% 7: Plot everything as a check
-figure(100);
+figure(100)
 for j = 1:length(sesh)
     % Plot on an individual subplot
     subplot_auto(length(sesh) + 1,j+1);
