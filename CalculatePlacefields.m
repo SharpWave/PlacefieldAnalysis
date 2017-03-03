@@ -121,10 +121,12 @@ name_append = [name_append name_append2];
 
 if (~isempty(alt_inputs))
     display('using user-specified neuronal activity');
-    load(alt_inputs,'NeuronImage','NeuronPixels','FT');
+    load(alt_inputs,'NeuronImage','NeuronPixelIdxList','PSAbool');
 else
     load ('ProcOut.mat','NeuronImage','NeuronPixels','FT');
 end
+NeuronPixels = NeuronPixelIdxList;
+FT = PSAbool;
 
 NumNeurons = size(FT,1);
 
@@ -339,6 +341,9 @@ RunSpeedMap = RunSpeedMap./RunOccMap;
 
 p = ProgressBar(NumNeurons);
 
+
+NumRunFrames = sum(isrunning & frames_use_ind);
+
 for i = 1:NumNeurons
   [TMap{i}, TMap_gauss{i}, TMap_unsmoothed{i}] = calcmapdec(FT(i,:), ...
       RunOccMap, Xbin, Ybin, isrunning & frames_use_ind, cmperbin);
@@ -355,7 +360,8 @@ for i = 1:NumNeurons
       TMap_half = [];
       pval_half = [];
   end
-  SpatialI(i) = Dave_MutInfo(PositionVector(find(isrunning)),NumXBins*NumYBins,FT(i,find(isrunning))+1,2);
+  
+  SpatialI(i) = SkaggsCaMutInfo(TMap_gauss{i},RunOccMap,NumRunFrames,cmperbin);
   
   if progress_bar == 1
      p.progress; 
@@ -382,7 +388,7 @@ save(save_name,'x', 'y', 't', 'xOutline', 'yOutline', 'speed','minspeed', ...
     'SpeedMap', 'RunSpeedMap', 'NeuronImage', 'NeuronPixels',...
     'cmperbin', 'pval', 'Xbin', 'Ybin', 'FToffset', 'FToffsetRear', 'isrunning',...
     'Xedges', 'Yedges','exclude_frames','aviFrame','TMap_half','pval_half',...
-    'pvalI','SpatialH','Pix2Cm','SpatialI','-v7.3'); 
+    'pvalI','SpatialH','Pix2Cm','SpatialI','frames_use_ind','-v7.3'); 
 
 output_filename = save_name;
 
