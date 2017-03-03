@@ -292,7 +292,7 @@ axis tight;
 Xbin(find(Xbin == (NumXBins+1))) = NumXBins;
 Ybin(find(Ybin == (NumYBins+1))) = NumYBins;
 
-Xbin(find(Xbin == 0)) = 1;
+Xbin(find(Xbin == 0)) = 1; % This is wrong and will send out of range values to 1 for some reason...not good!
 Ybin(find(Ybin == 0)) = 1;
 
 PositionVector = sub2ind([NumXBins,NumYBins],Xbin,Ybin);
