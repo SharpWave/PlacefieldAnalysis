@@ -1,25 +1,28 @@
 function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow, varargin)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+% [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow, varargin)
+%   Aligns imaging and tracking data.
+%
+%   IMPORTANT NOTE: You MUST be in the directory where Pos.mat lives for
+%   this session for this to work.  Need to fix this somehow in the future,
+%   but for now it is what it is...currently attempting to do with
+%   basedir where you can add in the directory where Pos.mat is
 
 p = inputParser;
 p.addRequired('Pix2CM', @isnumeric);
 p.addRequired('FT', @(a) isnumeric(a) || islogical(a));
 p.addOptional('HalfWindow',0, @(a) round(a) == a && a >= 0);
 p.addParameter('suppress_output',false, @islogical);
+p.addParameter('basedir', pwd, @ischar);
 p.parse(Pix2Cm, FT, HalfWindow, varargin{:});
 
 HalfWindow = p.Results.HalfWindow;
 suppress_output = p.Results.suppress_output;
+basedir = p.Results.basedir;
 
 SR = 20;
 
-% if ~exist('HalfWindow','var')
-%     HalfWindow = 10;
-% end
-
-try
-    load Pos.mat
+try 
+    load(fullfile(basedir,'Pos.mat'))
     x = xpos_interp;
     y = ypos_interp;
     if ~exist('nframesinserted','var') % Backward's compatibility fix/notification
@@ -34,9 +37,9 @@ catch
     [xpos_interp,ypos_interp,start_time,MoMtime,time_interp,AVItime_interp,nframesinserted]...
         = PreProcessMousePosition_auto(vidFile.name);
 end
-
 x = xpos_interp;
 y = ypos_interp;
+
 
 x = x.*Pix2Cm;
 y = y.*Pix2Cm;
