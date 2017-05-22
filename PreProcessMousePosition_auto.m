@@ -137,7 +137,7 @@ if exist('Pos_temp.mat','file') || exist('Pos.mat','file')
         load_file = 'Pos.mat';
     end
     if strcmpi(use_temp,'y')
-        load(load_file,'Xpix', 'Ypix', 'xAVI', 'yAVI', 'MoMtime', 'MouseOnMazeFrame');
+        load(load_file,'Xpix', 'Ypix', 'xAVI', 'yAVI', 'MoMtime', 'MouseOnMazeFrame','maze');
         MoMtime
     else
         MouseOnMazeFrame = input('on what frame number does Mr. Mouse arrive on the maze??? --->');
@@ -194,9 +194,11 @@ MorePoints = 'y';
 %length(time);
 
 %Draw a mask for the maze.
-figure;
-imagesc(flipud(v0)); title('Draw a mask for the maze'); 
-maze = roipoly; 
+if ~exist('maze') % Don't prompt to draw if already in Pos_temp.mat'
+    figure;
+    imagesc(flipud(v0)); title('Draw a mask for the maze');
+    maze = roipoly;
+end
 
 n = 1; %first_time = 1;
 while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
@@ -222,6 +224,7 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
           while (FrameSelOK == 0)
               display('click on the good points around the flaw then hit enter');
               [DVTsec,~] = ginput(2); % DVTsec is start and end time in DVT seconds
+              DVTsec = sort(DVTsec); % re-arrange if clicked from right-to-left
               sFrame = findclosest(time,DVTsec(1)); % index of start frame
               eFrame = findclosest(time,DVTsec(2)); % index of end frame
               aviSR*sFrame;
@@ -404,7 +407,7 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
     drawnow % Make sure everything gets updated properly!
     
     % NRK edit
-    save Pos_temp.mat Xpix Ypix xAVI yAVI MoMtime MouseOnMazeFrame
+    save Pos_temp.mat Xpix Ypix xAVI yAVI MoMtime MouseOnMazeFrame maze
     
   continue
   end
@@ -428,6 +431,7 @@ if strcmp(MorePoints,'m')
           while (FrameSelOK == 0)
               display('click on the good points around the flaw then hit enter');
               [DVTsec,~] = ginput(2); % DVTsec is start and end time in DVT seconds
+              DVTsec = sort(DVTsec); % re-arrange if clicked from right-to-left
               sFrame = findclosest(time,DVTsec(1)); % index of start frame
               eFrame = findclosest(time,DVTsec(2)); % index of end frame
               aviSR*sFrame;
@@ -560,7 +564,7 @@ if strcmp(MorePoints,'m')
     drawnow % Make sure everything gets updated properly!
     
     % NRK edit
-    save Pos_temp.mat Xpix Ypix xAVI yAVI MoMtime MouseOnMazeFrame
+    save Pos_temp.mat Xpix Ypix xAVI yAVI MoMtime MouseOnMazeFrame maze
     
   continue
 end
@@ -611,6 +615,6 @@ nframesinserted = round(length(AVItime_interp) - length(bad_time)*0.6664);
 
 % Save all filtered data as well as raw data in case you want to go back
 % and fix an error you discover later on
-save Pos.mat xpos_interp ypos_interp time_interp start_time MoMtime Xpix Ypix xAVI yAVI MouseOnMazeFrame AVItime_interp nframesinserted;
+save Pos.mat xpos_interp ypos_interp time_interp start_time MoMtime Xpix Ypix xAVI yAVI MouseOnMazeFrame AVItime_interp nframesinserted maze;
 
 end
