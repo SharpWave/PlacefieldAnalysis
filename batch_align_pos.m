@@ -169,7 +169,7 @@ for j = 1:num_sessions
     end
     
     % Align tracking and imaging
-    [x,y,speed,PSAbool,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = ...
+    [x,y,speed,PSAbool,FToffset,FToffsetRear,aviTime,time_interp,nframesinserted] = ...
         AlignImagingToTracking(Pix2Cm,PSAbool,HalfWindow, 'suppress_output', suppress_output);
     if ~skip_trace_align
         [~,~,~,LPtrace] = AlignImagingToTracking(Pix2Cm,LPtrace,HalfWindow, 'suppress_output', suppress_output);
@@ -225,7 +225,7 @@ for j = 1:num_sessions
     sesh(j).rot_x = rot_x;
     sesh(j).rot_y = rot_y;
     sesh(j).rot_ang = rot_ang;
-    sesh(j).aviFrame = aviFrame;
+    sesh(j).aviFrame = aviTime;
     sesh(j).time_interp = time_interp;
     sesh(j).nframesinserted = nframesinserted;
     
@@ -234,6 +234,7 @@ end
 
 pb.stop;
 
+cd(curr_dir)
 
 %% 2: Align position data for each session to the base session by using the 95% occupancy limits, save as Pos_align.mat
 % Include base session in Pos_align for future reference
@@ -340,7 +341,7 @@ for j = start_sesh:length(sesh)
     RawTrace = sesh(j).RawTrace;
     FToffset = sesh(j).FToffset;
     FToffsetRear = sesh(j).FToffsetRear;
-    aviFrame = sesh(j).aviFrame;
+    aviTime = sesh(j).aviFrame;
     time_interp = sesh(j).time_interp;
     nframesinserted = sesh(j).nframesinserted;
     Pix2CM = sesh(j).Pix2CM;
