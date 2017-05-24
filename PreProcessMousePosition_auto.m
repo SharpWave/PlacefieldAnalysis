@@ -388,6 +388,7 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
     hold off;axis tight;xlabel('time (sec)');ylabel('velocity (units/sec)'); 
     set(gca,'xtick',[]); 
     xlim_use = get(gca,'XLim'); hv = gca;
+    ylim([min(vel(MouseOnMazeFrame:(end-3))), max(vel(MouseOnMazeFrame:(end-3)))])
     
     % plot updated x and y values
     hx = subplot(4,3,1:3); plot(time,Xpix); hold on; 
@@ -544,6 +545,7 @@ if strcmp(MorePoints,'m')
         hold off
     end
     hold off;axis tight;xlabel('time (sec)');ylabel('velocity (units/sec)');
+    ylim([min(vel(MouseOnMazeFrame:(end-3))), max(vel(MouseOnMazeFrame:(end-3)))])
     xlim_use = get(gca,'XLim'); hv = gca;
     
     % plot updated x and y values
