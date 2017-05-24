@@ -374,7 +374,7 @@ while (strcmp(MorePoints,'y')) || strcmp(MorePoints,'m') || isempty(MorePoints)
     subplot(4,3,7:9);
     vel = hypot(diff(Xpix),diff(Ypix))/(time(2)-time(1));
     vel = [vel; vel(end)]; % Make the vectors the same size
-    plot(time(MouseOnMazeFrame:end),vel(MouseOnMazeFrame:end));
+    plot(time(MouseOnMazeFrame:(end-3)),vel(MouseOnMazeFrame:(end-3))); % plot to end-3 only for edge case where we can't eliminate the velocity spike in the last frame.
     hold on
     plot(time([sFrame eFrame]),vel([sFrame eFrame]),'ro'); % plot start and end points of last edit
     if auto_thresh_flag == 1
@@ -532,7 +532,7 @@ if strcmp(MorePoints,'m')
     subplot(4,3,7:9);
     vel = sqrt(diff(Xpix).^2+diff(Ypix).^2)/(time(2)-time(1));
     vel = [vel; vel(end)]; % Make the vectors the same size
-    plot(time(MouseOnMazeFrame:end),vel(MouseOnMazeFrame:end));
+    plot(time(MouseOnMazeFrame:(end-3)),vel(MouseOnMazeFrame:(end-3))); % plot to end-3 only for edge case where we can't eliminate the velocity spike in the last frame.
     hold on
     plot(time([sFrame eFrame]),vel([sFrame eFrame]),'ro'); % plot start and end points of last edit
     if auto_thresh_flag == 1
