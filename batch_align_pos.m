@@ -324,7 +324,7 @@ elseif ~base_adjust % Set limits to those from base session if not adjusting the
     load(base_align_file,'xmin', 'xmax', 'ymin', 'ymax');
 end
 
-keyboard
+% keyboard
 
 %% 6: Save Xedges, Yedges in base session for future reference along with all sessions aligned to it.
 % Also save adjusted position data for future use...
@@ -341,7 +341,7 @@ for j = start_sesh:length(sesh)
     RawTrace = sesh(j).RawTrace;
     FToffset = sesh(j).FToffset;
     FToffsetRear = sesh(j).FToffsetRear;
-    aviTime = sesh(j).aviFrame;
+    aviFrame = sesh(j).aviFrame;
     time_interp = sesh(j).time_interp;
     nframesinserted = sesh(j).nframesinserted;
     Pix2CM = sesh(j).Pix2CM;
