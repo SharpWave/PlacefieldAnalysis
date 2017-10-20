@@ -132,7 +132,7 @@ for i = 1:NumFrames
     
     % load correct Inscopix movie frame
     try
-        frame = double(h5read(infile,'/Object',[1 1 ceil(t(i)/0.05)+FToffset 1],[Xdim Ydim 1 1]));
+        frame = double(h5read(infile,'/Object',[1 1 ceil(t(i)*aviobj.FrameRate)+FToffset 1],[Xdim Ydim 1 1]));
     catch
         return
     end

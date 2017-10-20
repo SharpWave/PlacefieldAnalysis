@@ -1,4 +1,4 @@
-function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow, varargin)
+function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow,SR, varargin)
 % [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow, varargin)
 %   Aligns imaging and tracking data.
 %
@@ -18,8 +18,6 @@ p.parse(Pix2Cm, FT, HalfWindow, varargin{:});
 HalfWindow = p.Results.HalfWindow;
 suppress_output = p.Results.suppress_output;
 basedir = p.Results.basedir;
-
-SR = 20;
 
 try 
     load(fullfile(basedir,'Pos.mat'))
