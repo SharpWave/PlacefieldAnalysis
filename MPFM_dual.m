@@ -63,7 +63,7 @@ figure;
 set(gcf,'Position',[534 72 1171 921]);
 
 aviobj = VideoWriter(out_avifile,'MPEG-4');
-aviobj.FrameRate = 20;
+aviobj.FrameRate = 10;
 aviobj.Quality = 90;
 open(aviobj);
 

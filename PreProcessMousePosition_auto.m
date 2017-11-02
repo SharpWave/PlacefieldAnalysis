@@ -587,7 +587,7 @@ end
 frame_rate_emp = round(1/mean(diff(time))); % empirical frame rate (frames/sec)
 
 % Generate times to match brain imaging data timestamps
-fps_brainimage = 20; % frames/sec for brain image timestamps
+fps_brainimage = 10; % frames/sec for brain image timestamps CHANGE THIS IMMEDIATELY
 
 start_time = ceil(min(time)*fps_brainimage)/fps_brainimage;
 max_time = floor(max(time)*fps_brainimage)/fps_brainimage;

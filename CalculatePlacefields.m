@@ -60,7 +60,7 @@ rotate_to_std = 0;
 name_append = '';
 name_append2 = '';
 calc_half = 0;
-cmperbin = 1; % Dombeck uses 2.5 cm bins, Ziv uses 2x2 bins with 3.75 sigma gaussian smoothing
+cmperbin = .25; % Dombeck uses 2.5 cm bins, Ziv uses 2x2 bins with 3.75 sigma gaussian smoothing
 use_mut_info = 0; % default
 minspeed = 1; % cm/s, default
 pos_align_file = '';
@@ -68,7 +68,7 @@ man_savename = [];
 use_unaligned_data = 0; % default
 alt_inputs = []; % default
 HalfWindow = 0;
-NumShuffles = 500; % default for running bootstrapping in StrapIt below
+NumShuffles = 1000; % default for running bootstrapping in StrapIt below
 for j = 1:length(varargin)
     if strcmpi('half_window',varargin{j})
         HalfWindow = varargin{j+1};
@@ -131,7 +131,7 @@ FT = PSAbool;
 
 NumNeurons = size(FT,1);
 
-SR = 20;
+SR = 10,
 Pix2Cm = 0.15;
 
 % Note that Pix2Cm should probably live in MakeMouseSession somewhere since
@@ -154,6 +154,8 @@ else
         display('Room 201a - 2015');
     end
 end
+
+Pix2Cm = .102;
 
 for i = 1:NumNeurons
     temp = bwboundaries(NeuronImage{i});
