@@ -326,7 +326,7 @@ end
 figure(30);imagesc(NewPosMap);axis image;colorbar;
 %
 
-NumShuffles = 1000;
+NumShuffles = 500;
 
 totalrun = sum(runlengths);
 
@@ -338,7 +338,7 @@ end
 binedge = [0,binedge];
 largestfree = runlengths;
 
-for i = 1:NumNeurons 
+ for i = 1:NumNeurons 
     i/NumNeurons,
     
     
@@ -467,7 +467,7 @@ for i = 1:NumNeurons
 %     pause;
 end
 
-save PlaceMaps2.mat sigPF NewPosMap realPL PLpct PLthr FT Xbin Ybin NumXBins NumYBins isrunning smspeed
+save PlaceMaps2.mat sigPF NewPosMap realPL PLpct PLthr FT Xbin Ybin NumXBins NumYBins isrunning smspeed Xedges Yedges x y NeuronImage;
 
 
 

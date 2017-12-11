@@ -18,11 +18,11 @@ function [ ] = MPFM_dual(out_avifile,infile,clims,Pix2Cm,varargin)
 
 video_type = 1; % default to show both videos side-by-side
 if length(varargin) == 1
-   if strcmpi(varargin{1},'brain_only')
-       video_type = 2;
-   elseif strcmpi(varargin{1},'PF_only')
-       video_type = 3;
-   end
+    if strcmpi(varargin{1},'brain_only')
+        video_type = 2;
+    elseif strcmpi(varargin{1},'PF_only')
+        video_type = 3;
+    end
 end
 
 close all;
@@ -50,11 +50,11 @@ catch
     obj = VideoReader(avi_filepath);
 end
 
-load PlaceMaps.mat;
+load PlaceMaps2.mat;
+load ('PlaceMaps.mat','aviFrame','t','FToffset','xOutline','yOutline')
 load PFstats.mat;
 
-
-NumFrames = length(x);
+NumFrames = size(FT,2);
 NumNeurons = length(NeuronImage);
 Xdim = size(NeuronImage{1},1);
 Ydim = size(NeuronImage{1},2);
@@ -67,6 +67,8 @@ aviobj.FrameRate = 10;
 aviobj.Quality = 90;
 open(aviobj);
 
+load Pix2Cm.mat;
+
 % assign each neuron a color
 colors = rand(NumNeurons,3);
 
@@ -78,7 +80,7 @@ yAVI = y/Pix2Cm*0.625;
 Xd = Xedges(2)-Xedges(1);
 Yd = Yedges(2)-Yedges(1);
 if video_type == 1 || video_type == 3
-
+    
 end
 
 for i = 1:length(Xedges)
@@ -90,11 +92,13 @@ for i = 1:length(Yedges)
 end
 
 % for each neuron
-try
+
+goodPF = zeros(1,NumNeurons);
+% try
 for j = 1:NumNeurons
     % get PF outline (if avail)
     WhichField = MaxPF(j);
-    temp = zeros(size(TMap{1}));
+    temp = zeros(size(PLpct{1}));
     tp = PFpixels{j,WhichField};
     temp(tp) = 1;
     nt(j) = size(NP_FindSupraThresholdEpochs(FT(j,:),eps),1);
@@ -109,11 +113,18 @@ for j = 1:NumNeurons
         %colors(j,:)
         %plot(xt,yt,'Color',colors(j,:),'LineWidth',5);
     end
+    [~,idx] = find(PFactive{j,WhichField});
+    if(~isempty(idx))
+        firsthit(j) = PFepochs{j,WhichField}(idx(1),1);
+    else
+        firsthit(j) = 10000000;
+    end
+    goodPF(j) = PFnumhits(j,WhichField) > 1;
 end
-catch
-    disp('MPFM_dual error catching')
-    keyboard
-end
+% catch
+%     disp('MPFM_dual error catching')
+%     keyboard
+% end
 
 
 
@@ -134,6 +145,7 @@ for i = 1:NumFrames
     try
         frame = double(h5read(infile,'/Object',[1 1 ceil(t(i)*aviobj.FrameRate)+FToffset 1],[Xdim Ydim 1 1]));
     catch
+        keyboard;
         return
     end
     % rescale the frame to [0 256]
@@ -193,13 +205,13 @@ for i = 1:NumFrames
         % for each active neuron
         for j = an'
             
-            if ((pval(j) > 0.95) & (nt(j) >= 3))
+            if (goodPF(j) && (i >= firsthit(j)))
                 
                 plot(xt{j},yt{j},'Color',colors(j,:),'LineWidth',5);
                 
             end
         end
-        end
+    end
     
     if video_type ~= 2
         % plot mouse marker

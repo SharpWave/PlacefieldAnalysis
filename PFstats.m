@@ -46,11 +46,13 @@ if alt_file == 1
     load(alt_file_use)
 elseif alt_file == 0
     if rot_to_std == 0
-        load PlaceMaps.mat; % x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin;
+        load PlaceMaps2.mat; % x y t xOutline yOutline speed minspeed FT TMap RunOccMap OccMap SpeedMap RunSpeedMap NeuronImage NeuronPixels cmperbin pval Xbin Ybin;
     elseif rot_to_std == 1
         load PlaceMaps_rot_to_std.mat;
     end
 end
+
+load ('FinalOutput.mat','NeuronImage')
 
 % Which pixels are in place field?
 
@@ -72,8 +74,8 @@ for i = 1:NumNeurons
     else
         display(['calculating PF center for neuron ',int2str(i)]);
     end
-    peakval = max(TMap{i}(:));
-    ThreshMap = TMap_gauss{i}.*(TMap_gauss{i} > peakval/tmap_thresh_denom);
+    peakval = max(sigPF{i}(:));
+    ThreshMap = sigPF{i};
     BoolMap = ThreshMap > 0;
     b{i} = bwconncomp(BoolMap);
     r{i} = regionprops(b{i},'area','centroid');
@@ -120,7 +122,7 @@ end
 % it
 
 % convert Xbin and Ybin into a single number denoting where the mouse is
-loc_index = sub2ind(size(TMap{1}),Xbin,Ybin);
+loc_index = sub2ind(size(sigPF{1}),Xbin,Ybin);
 
 disp('Calculating PF visits for all neurons')
 if progress_bar == 1
