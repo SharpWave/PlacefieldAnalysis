@@ -51,13 +51,17 @@ catch
 end
 
 load PlaceMaps2.mat;
-load ('PlaceMaps.mat','aviFrame','t','FToffset','xOutline','yOutline')
 load PFstats.mat;
 
 NumFrames = size(FT,2);
 NumNeurons = length(NeuronImage);
 Xdim = size(NeuronImage{1},1);
 Ydim = size(NeuronImage{1},2);
+for i = 1:NumNeurons
+    temp = bwboundaries(NeuronImage{i});
+    yOutline{i} = temp{1}(:,1);
+    xOutline{i} = temp{1}(:,2);
+end
 
 figure;
 set(gcf,'Position',[534 72 1171 921]);
@@ -194,7 +198,11 @@ for i = 1:NumFrames
     hold on;
     if video_type == 1 || video_type == 2 % Plot Neuron outlines
         for j = 1:length(an)
+            try
             plot(xOutline{an(j)}+image_offset,yOutline{an(j)},'-r','LineWidth',3,'Color',colors(an(j),:));
+            catch
+                keyboard;
+            end
         end
     end
     

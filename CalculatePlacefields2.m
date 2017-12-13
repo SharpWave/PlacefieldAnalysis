@@ -250,7 +250,7 @@ isrunning = smspeed >= minspeed;
 t = (1:length(x))./SR;
 
 figure(1);plot(t,smspeed);axis tight;xlabel('time (sec)');ylabel('speed cm/s');
-
+tsave = t;
 % Set up binning and smoothers for place field analysis
 
 % Dombeck used 2.5 cm bins - Ziv uses 2cm bins
@@ -320,7 +320,13 @@ NewPosMap = zeros(NumXBins,NumYBins);
 
 for i = 1:length(startruns);
     for t = startruns(i):endruns(i)
-        NewPosMap(Xbin(t)-mouseoff:Xbin(t)-mouseoff+mouselen-1,Ybin(t)-mouseoff:Ybin(t)-mouseoff+mouselen-1) =  NewPosMap(Xbin(t)-mouseoff:Xbin(t)-mouseoff+mouselen-1,Ybin(t)-mouseoff:Ybin(t)-mouseoff+mouselen-1)+mousedisk;
+        tempmouse = MakeCircMask(NumXBins,NumYBins,mouseoff,Ybin(t),Xbin(t));
+        try
+        NewPosMap(tempmouse) =  NewPosMap(tempmouse)+1;
+        catch
+            keyboard;
+        end
+
     end
 end
 figure(30);imagesc(NewPosMap);axis image;colorbar;
@@ -412,7 +418,8 @@ largestfree = runlengths;
         for k = 1:length(tempbase)
             for m = startruns(k):endruns(k)
                 if fakef(m)
-                    fakePF(Xbin(m)-mouseoff:Xbin(m)-mouseoff+mouselen-1,Ybin(m)-mouseoff:Ybin(m)-mouseoff+mouselen-1) =  fakePF(Xbin(m)-mouseoff:Xbin(m)-mouseoff+mouselen-1,Ybin(m)-mouseoff:Ybin(m)-mouseoff+mouselen-1)+mousedisk;
+                    tempmouse = MakeCircMask(NumXBins,NumYBins,mouseoff,Ybin(m),Xbin(m));
+                    fakePF(tempmouse) =  fakePF(tempmouse)+1;
                 end
             end
         end
@@ -425,7 +432,8 @@ largestfree = runlengths;
     for k = 1:length(tempbase)
         for m = startruns(k):endruns(k)
             if FT(i,m)
-                realPL{i}(Xbin(m)-mouseoff:Xbin(m)-mouseoff+mouselen-1,Ybin(m)-mouseoff:Ybin(m)-mouseoff+mouselen-1) =  realPL{i}(Xbin(m)-mouseoff:Xbin(m)-mouseoff+mouselen-1,Ybin(m)-mouseoff:Ybin(m)-mouseoff+mouselen-1)+mousedisk;
+                tempmouse = MakeCircMask(NumXBins,NumYBins,mouseoff,Ybin(m),Xbin(m));
+                realPL{i}(tempmouse) =  realPL{i}(tempmouse)+1;
             end
         end
     end
@@ -444,9 +452,9 @@ largestfree = runlengths;
     %PLpct{i}(NewPosMap < 1) = 0;
     
     
-    xb = 16; % this is a hack need to determine this auto
+    xb = 2; % this is a hack need to determine this auto
     sigPF{i} = realPL{i};
-    sigPF{i}(PLthr{i} == 0) = 0;
+     sigPF{i}(PLthr{i} == 0) = 0;
     sigPF{i}(1:xb,:) = 0;
     sigPF{i}(end-xb+1:end,:) = 0;
     sigPF{i}(:,1:xb) = 0;
@@ -465,9 +473,10 @@ largestfree = runlengths;
 %     figure(3);imagesc(PLpct{i});set(gca,'YDir','reverse');colorbar;axis image;set(gcf,'Position',[658   116   634   854]);
 %     %figure(5);imagesc(countPL{i});set(gca,'YDir','reverse');colorbar;axis image;
 %     pause;
-end
+ end
 
-save PlaceMaps2.mat sigPF NewPosMap realPL PLpct PLthr FT Xbin Ybin NumXBins NumYBins isrunning smspeed Xedges Yedges x y NeuronImage;
+t = tsave;
+save PlaceMaps2.mat sigPF NewPosMap realPL PLpct PLthr FT Xbin Ybin NumXBins NumYBins isrunning smspeed Xedges Yedges x y NeuronImage t aviFrame FToffset;
 
 
 
