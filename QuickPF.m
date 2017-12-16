@@ -1,4 +1,4 @@
-function [output_filename] = CalculatePlacefields2(varargin)
+function [output_filename] = QuickPF(PixelIdxList,IsSpiking)
 % [] = [] = CalculatePlacefields(RoomStr,varargin)
 % RoomStr, e.g. '201a'
 %       Takes tracking data from Pos.mat (or Pos_align.mat, see batch_pos_align)
@@ -14,12 +14,12 @@ function [output_filename] = CalculatePlacefields2(varargin)
 %       Doerr).  Default = 1;
 %
 %       -'exclude_frames': 1 x n array of frame numbers you wish to exclude from
-%       PFA analysis. IMPORTANT - these frames correspond to position/FT
+%       PFA analysis. IMPORTANT - these frames correspond to position/IsSpiking
 %       data that has already been aligned by running
 %       AlignImagingToTracking.
 %
 %       -'exclude_frames_raw: same as exclude_frames but using indices from
-%       raw FT data out of ProcOut.mat that has NOT been aligned to
+%       raw IsSpiking data out of ProcOut.mat that has NOT been aligned to
 %       position data (e.g. bad/dropped frames identified in Mosaic).  Can
 %       be used in conjunction with 'exclude_frames' if you have both types
 %       of frames you wish to exclude
@@ -35,8 +35,6 @@ function [output_filename] = CalculatePlacefields2(varargin)
 %
 %       -'cmperbin': centimeters per occupancy bin.  Default is 1.
 %
-%       -'calc_half': 0 = default. 1 = calculate TMap and pvalues for 1st
-%       and 2nd half of session along with whole session maps
 %
 %       -'mispeed': threshold for calculating placemaps.  Any values below
 %           are not used. 1 cm/s = default.
@@ -59,15 +57,11 @@ exclude_frames_raw = [];
 rotate_to_std = 0;
 name_append = '';
 name_append2 = '';
-calc_half = 0;
 cmperbin = 1; % Dombeck uses 2.5 cm bins, Ziv uses 2x2 bins with 3.75 sigma gaussian smoothing
 mouseradiuscm = 4;
-use_mut_info = 0; % default
 minspeed = 1; % cm/s, default
 pos_align_file = '';
-man_savename = [];
 use_unaligned_data = 0; % default
-alt_inputs = []; % default
 HalfWindow = 0;
 NumShuffles = 1000; % default for running bootstrapping in StrapIt below
 for j = 1:length(varargin)
@@ -76,12 +70,6 @@ for j = 1:length(varargin)
     end
     if strcmpi('progress_bar',varargin{j})
         progress_bar = varargin{j+1};
-    end
-    if strcmpi('man_savename',varargin{j})
-        man_savename = varargin{j+1};
-    end
-    if strcmpi('alt_inputs',varargin{j})
-        alt_inputs = varargin{j+1};
     end
     if strcmpi('exclude_frames',varargin{j})
         exclude_frames = varargin{j+1};
@@ -97,12 +85,6 @@ for j = 1:length(varargin)
     end
     if strcmpi('cmperbin',varargin{j})
         cmperbin = varargin{j+1};
-    end
-    if strcmpi('calc_half',varargin{j})
-        calc_half = varargin{j+1};
-    end
-    if strcmpi(varargin{j},'use_mut_info')
-        use_mut_info = varargin{j+1};
     end
     if strcmpi(varargin{j},'minspeed')
         minspeed = varargin{j+1};
@@ -120,16 +102,7 @@ for j = 1:length(varargin)
 end
 name_append = [name_append name_append2];
 
-if (~isempty(alt_inputs))
-    display('using user-specified neuronal activity');
-    load(alt_inputs,'NeuronImage','NeuronPixelIdxList','PSAbool');
-else
-    load('FinalOutput.mat','NeuronImage','NeuronPixelIdxList','PSAbool');
-    disp('Using FinalOutput.mat');
-end
-NeuronPixels = NeuronPixelIdxList;
-FT = PSAbool;
-NumNeurons = size(FT,1);
+NumNeurons = size(IsSpiking,1);
 SR = 10,
 
 try
@@ -180,7 +153,7 @@ catch % If no alignment has been performed, alert the user
     disp('Using position data that has NOT been aligned to other like sessions.')
     disp('NOT good for comparisons across sessions...run batch_align_pos for this.')
     
-    [x,y,speed,FT,FToffset,FToffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow,SR);
+    [x,y,speed,IsSpiking,IsSpikingoffset,IsSpikingoffsetRear, aviFrame] = AlignImagingToTracking(Pix2Cm,IsSpiking,HalfWindow,SR);
     xmax = max(x); xmin = min(x);
     ymax = max(y); ymin = min(y);
     pos_align_use = 0;
@@ -191,9 +164,9 @@ Flength = length(x);
 %% Adjust exclude_frames_raw if applicable
 
 if ~isempty(exclude_frames_raw)
-    % take raw/non-aligned frame inidices that are aligned with FT from
-    % ProcOut.mat file and align to aligned position/FT data.
-    exclude_aligned = exclude_frames_raw - FToffset + 2;
+    % take raw/non-aligned frame inidices that are aligned with IsSpiking from
+    % ProcOut.mat file and align to aligned position/IsSpiking data.
+    exclude_aligned = exclude_frames_raw - IsSpikingoffset + 2;
     exclude_aligned = exclude_aligned(exclude_aligned > 0); % Get rid of any negative values (corresponding to times before the mouse was on the maze)
     exclude_frames = [exclude_frames, exclude_aligned]; % concatenate to exclude_frames
 end
@@ -212,10 +185,8 @@ if pos_align_use == 1
 end
 % Exclude frames specified in the session structure
 ind_use = ones(1,Flength);
-ind_use_half{1} = zeros(1,Flength);
-ind_use_half{2} = zeros(1,Flength);
-half = round(Flength/2);
-% Check for edge case where exclude frames extend beyond the end of FT
+
+% Check for edge case where exclude frames extend beyond the end of IsSpiking
 % (usually due to adjustments in case of smoothing) - COULD BE A BUG HERE -
 % DOES exclude_frames get messed up/ misaligned by half the smoothing
 % window as a result of this???
@@ -224,14 +195,10 @@ if max(exclude_frames) > Flength
     exclude_frames = temp;
 end
 ind_use(exclude_frames) = zeros(1,length(exclude_frames)); % Send bad frames to zero
-half_validonly = find(cumsum(ind_use) == round(sum(ind_use)/2),1,'last'); % Get halfway point of valid indices
-ind_use_half{1}(1:half) = 1; %zeros(1,length(1:half)); % Get 1st half valid indices
-ind_use_half{2}(half+1:length(ind_use)) = 1; %zeros(1,length(half+1:length(ind_use))); % get 2nd half valid indices
+
 % Use only frames that are not excluded in the session structure AND are
 % within the specified arena limits
 frames_use_ind = ind_use & pos_ind_use;
-frames_use_ind_half{1} = ind_use_half{1} & pos_ind_use; % NRK note: this should probably be changed to chop only the valid indices in half, not do an AND between the first half indices and valid indices
-frames_use_ind_half{2} = ind_use_half{2} & pos_ind_use;
 frames_use = find(frames_use_ind);
 
 %%%%%%%%%%%%%%%%%%%%%%%%
@@ -299,12 +266,12 @@ PositionVector = sub2ind([NumXBins,NumYBins],Xbin,Ybin);
 
 NumPos = NumXBins * NumYBins;
 
-NumNeurons = size(FT,1);
-NumSamples = size(FT,2);
+NumNeurons = size(IsSpiking,1);
+NumSamples = size(IsSpiking,2);
 LastPV = 0;
 Curr = 0;
 
-% first, make NewFT and new PV
+% first, make NewIsSpiking and new PV
 templengths = NP_FindSupraThresholdEpochs(isrunning,eps,0);
 startruns = templengths(:,1);
 endruns = templengths(:,2);
@@ -330,9 +297,6 @@ for i = 1:length(startruns);
     end
 end
 figure(30);imagesc(NewPosMap);axis image;colorbar;
-%
-
-NumShuffles = 500;
 
 totalrun = sum(runlengths);
 
@@ -348,7 +312,7 @@ largestfree = runlengths;
     i/NumNeurons,
     
     
-    f = FT(i,:);
+    f = IsSpiking(i,:);
     
     % calculate lengths of firing episodes
     trlengths = [];
@@ -431,7 +395,7 @@ largestfree = runlengths;
     realPL{i} = zeros(NumXBins,NumYBins);
     for k = 1:length(tempbase)
         for m = startruns(k):endruns(k)
-            if FT(i,m)
+            if IsSpiking(i,m)
                 tempmouse = MakeCircMask(NumXBins,NumYBins,mouseoff,Ybin(m),Xbin(m));
                 realPL{i}(tempmouse) =  realPL{i}(tempmouse)+1;
             end
@@ -463,9 +427,9 @@ largestfree = runlengths;
 %     imagesc(temp);colorbar;
 %     hold on;
 %     plot(Ybin,Xbin,'Color',[0.7 0.7 0.7])
-%     a = find(FT(i,:).*isrunning);
+%     a = find(IsSpiking(i,:).*isrunning);
 %     plot(Ybin(a),Xbin(a),'ro');
-%     a = find(FT(i,:).*~isrunning);
+%     a = find(IsSpiking(i,:).*~isrunning);
 %     plot(Ybin(a),Xbin(a),'ko');
 %     hold off;
 %     axis image;
@@ -476,7 +440,7 @@ largestfree = runlengths;
  end
 
 t = tsave;
-save PlaceMaps2.mat sigPF NewPosMap realPL PLpct PLthr FT Xbin Ybin NumXBins NumYBins isrunning smspeed Xedges Yedges x y NeuronImage t aviFrame FToffset;
+save PlaceMaps2.mat sigPF NewPosMap realPL PLpct PLthr IsSpiking Xbin Ybin NumXBins NumYBins isrunning smspeed Xedges Yedges x y NeuronImage t aviFrame IsSpikingoffset;
 
 
 
