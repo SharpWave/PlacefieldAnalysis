@@ -1,4 +1,5 @@
-function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow, varargin)
+function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = ...
+    AlignImagingToTracking(Pix2Cm,FT,HalfWindow, varargin)
 % [x,y,speed,FT,FToffset,FToffsetRear,aviFrame,time_interp,nframesinserted] = AlignImagingToTracking(Pix2Cm,FT,HalfWindow, varargin)
 %   Aligns imaging and tracking data.
 %
@@ -13,16 +14,18 @@ p.addRequired('FT', @(a) isnumeric(a) || islogical(a));
 p.addOptional('HalfWindow',0, @(a) round(a) == a && a >= 0);
 p.addParameter('suppress_output',false, @islogical);
 p.addParameter('basedir', pwd, @ischar);
+% p.addParameter('pos_name_append','', @ischar);
 p.parse(Pix2Cm, FT, HalfWindow, varargin{:});
 
 HalfWindow = p.Results.HalfWindow;
 suppress_output = p.Results.suppress_output;
 basedir = p.Results.basedir;
+% pos_name_append = p.Results.pos_name_append;
 
 SR = 20;
 
 try 
-    load(fullfile(basedir,'Pos.mat'))
+    load(fullfile(basedir, 'Pos.mat'))
     x = xpos_interp;
     y = ypos_interp;
     if ~exist('nframesinserted','var') % Backward's compatibility fix/notification
