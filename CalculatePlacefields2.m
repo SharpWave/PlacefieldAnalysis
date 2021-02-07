@@ -332,7 +332,7 @@ end
 figure(30);imagesc(NewPosMap);axis image;colorbar;
 %
 
-NumShuffles = 500;
+NumShuffles = 20;
 
 totalrun = sum(runlengths);
 
